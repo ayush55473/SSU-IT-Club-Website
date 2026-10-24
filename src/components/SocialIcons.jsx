@@ -21,6 +21,12 @@ export function LinkedinIcon({ className = "w-4 h-4", ...props }) {
 
 export function InstagramIcon({ className = "w-4 h-4", ...props }) {
   return (
+     <a
+      href="https://www.instagram.com/itclubssu/"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Visit our Instagram"
+    >
     <svg
       className={className}
       viewBox="0 0 24 24"
