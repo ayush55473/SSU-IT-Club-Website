@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 380" fill="none">
+  <!-- Technology Seminar Artwork -->
+  <defs>
+    <linearGradient id="bgSem" x1="0" y1="0" x2="600" y2="380" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FCFAF8" />
+      <stop offset="100%" stop-color="#F5ECE4" />
+    </linearGradient>
+  </defs>
+  <rect width="600" height="380" rx="16" fill="url(#bgSem)" />
+  
+  <g transform="translate(300, 180)">
+    <!-- Stage / Presentation / Microphone & Waves -->
+    <circle cx="0" cy="0" r="110" stroke="#AE7B29" stroke-width="1.5" stroke-dasharray="4 4" stroke-opacity="0.4" />
+    <circle cx="0" cy="0" r="75" stroke="#672C1C" stroke-width="1" stroke-opacity="0.2" />
+    
+    <!-- Large Presentation Board -->
+    <rect x="-70" y="-60" width="140" height="85" rx="8" fill="#672C1C" />
+    <rect x="-62" y="-52" width="124" height="69" rx="4" fill="#FFFFFF" />
+    <!-- Graph & Tech Trends -->
+    <line x1="-50" y1="0" x2="50" y2="0" stroke="#E2E8F0" stroke-width="1" />
+    <polyline points="-45,5 -20,-15 10,-5 45,-30" fill="none" stroke="#AE7B29" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="-20" cy="-15" r="3.5" fill="#672C1C" />
+    <circle cx="10" cy="-5" r="3.5" fill="#672C1C" />
+    <circle cx="45" cy="-30" r="4.5" fill="#AE7B29" />
+    
+    <!-- Speaker Lectern / Podium -->
+    <path d="M-15 25 L15 25 L10 65 L-10 65 Z" fill="#AE7B29" />
+    <rect x="-25" y="65" width="50" height="8" rx="2" fill="#672C1C" />
+    <circle cx="0" cy="18" r="4" fill="#672C1C" />
+  </g>
+  
+  <rect x="24" y="24" width="130" height="28" rx="6" fill="#AE7B29" />
+  <text x="89" y="42" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="1">GUEST SPEAKER</text>
+</svg>

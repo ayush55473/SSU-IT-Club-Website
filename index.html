@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>University IT Club | Where Ideas Meet Innovation</title>
+    <meta name="description" content="Official website of the University IT Club. Bringing students together to explore technology, exchange ideas, learn new skills, and create meaningful experiences through events, workshops, and collaboration." />
+    
+    <!-- Premium Google Fonts: Plus Jakarta Sans & Space Grotesk & Playfair Display -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Official Palette Variables -->
+    <style>
+      :root {
+        --primary-color: #672C1C;      /* Dark Brown */
+        --background-color: #FFFFFF;   /* Pure White */
+        --secondary-color: #AE7B29;    /* Mustard Gold */
+        
+        --primary-dark: #481B0F;
+        --secondary-light: #C9963D;
+        --text-dark: #2B1209;
+        --text-secondary: #634F47;
+        --surface-subtle: #FAF7F5;
+        --border-subtle: rgba(103, 44, 28, 0.12);
+        --border-gold: rgba(174, 123, 41, 0.35);
+      }
+
+      /* Polished scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #FFFFFF;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(103, 44, 28, 0.25);
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #AE7B29;
+      }
+
+      /* Accessibility: Reduced Motion */
+      @media (prefers-reduced-motion: reduce) {
+        *, ::before, ::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-white text-[#2B1209] font-sans antialiased selection:bg-[#AE7B29] selection:text-white overflow-x-hidden">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

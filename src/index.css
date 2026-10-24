@@ -1,0 +1,225 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Official Required Palette */
+  --primary-color: #672C1C;      /* Dark Brown */
+  --background-color: #FFFFFF;   /* Pure White */
+  --secondary-color: #AE7B29;    /* Mustard Gold */
+
+  /* Supporting tonal accents derived strictly from official colours */
+  --primary-dark: #481B0F;
+  --primary-subtle: #FAF6F4;
+  --secondary-dark: #8E621C;
+  --secondary-subtle: #FCF9F3;
+  --text-dark: #2B1209;
+  --text-muted: #66534B;
+  --border-subtle: rgba(103, 44, 28, 0.12);
+  --border-gold: rgba(174, 123, 41, 0.35);
+  --gold-glow: rgba(174, 123, 41, 0.22);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    background-color: var(--background-color);
+  }
+
+  body {
+    background-color: var(--background-color);
+    color: var(--text-dark);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Account for sticky header so section titles are never hidden underneath */
+  section[id] {
+    scroll-margin-top: 88px;
+  }
+
+  h1, h2, h3, .font-heading {
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Elegant gold gradient accents */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #AE7B29 0%, #D8A54E 50%, #8E621C 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-darkbrown-gradient {
+  background: linear-gradient(135deg, #672C1C 0%, #3F170D 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Architectural Card & Border Effects */
+.border-gold-subtle {
+  border: 1px solid rgba(174, 123, 41, 0.3);
+}
+
+.border-brown-subtle {
+  border: 1px solid rgba(103, 44, 28, 0.12);
+}
+
+/* Perspective container for 3D tilts */
+.perspective-container {
+  perspective: 1000px;
+}
+
+/* Subtle architectural grid pattern background */
+.bg-subtle-grid {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(103, 44, 28, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(103, 44, 28, 0.03) 1px, transparent 1px);
+}
+
+.bg-gold-dots {
+  background-size: 24px 24px;
+  background-image: radial-gradient(rgba(174, 123, 41, 0.12) 1px, transparent 1px);
+}
+
+/* Interactive custom animated underline */
+.nav-link-underline {
+  position: relative;
+}
+
+.nav-link-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background-color: #AE7B29;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 9999px;
+}
+
+.nav-link-underline:hover::after,
+.nav-link-underline.active::after {
+  width: 100%;
+}
+
+/* Shimmer animation on buttons */
+@keyframes buttonShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.animate-shimmer {
+  animation: buttonShimmer 2.5s infinite;
+}
+
+/* ========================================================================== */
+/* CONTINUOUS LEFT-TO-RIGHT OUR TEAM HORIZONTAL CAROUSEL */
+/* ========================================================================== */
+@keyframes carouselSlideRight {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0%, 0, 0);
+  }
+}
+
+.animate-carousel-right {
+  display: flex;
+  width: max-content;
+  animation: carouselSlideRight 42s linear infinite;
+  will-change: transform;
+}
+
+.carousel-paused {
+  animation-play-state: paused !important;
+}
+
+/* ========================================================================== */
+/* CONTINUOUS RIGHT-TO-LEFT UPCOMING EVENTS HORIZONTAL CAROUSEL */
+/* ========================================================================== */
+@keyframes carouselSlideLeft {
+  0% {
+    transform: translate3d(0%, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-carousel-left {
+  display: flex;
+  width: max-content;
+  animation: carouselSlideLeft 42s linear infinite;
+  will-change: transform;
+}
+
+.animate-announcements-cards {
+  display: flex;
+  width: max-content;
+  animation: carouselSlideLeft 46s linear infinite;
+  will-change: transform;
+}
+
+/* ========================================================================== */
+/* KINETIC TYPOGRAPHY MARQUEE & OUTLINE UTILITIES FOR ANNOUNCEMENTS */
+/* ========================================================================== */
+@keyframes marqueeLeft {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes marqueeRight {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-marquee-left {
+  display: flex;
+  width: max-content;
+  animation: marqueeLeft 28s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-right {
+  display: flex;
+  width: max-content;
+  animation: marqueeRight 28s linear infinite;
+  will-change: transform;
+}
+
+.text-stroke-gold {
+  -webkit-text-stroke: 1.5px rgba(174, 123, 41, 0.5);
+  -webkit-text-fill-color: transparent;
+}
+
+.text-stroke-white {
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.25);
+  -webkit-text-fill-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+  .animate-carousel-right,
+  .animate-carousel-left,
+  .animate-announcements-cards,
+  .animate-marquee-left,
+  .animate-marquee-right,
+  .animate-shimmer {
+    animation-play-state: paused !important;
+    animation: none !important;
+  }
+}
