@@ -61,7 +61,7 @@ export const EVENTS = [
   },
   {
     id: "student-creativity-showcase",
-    title: "Student Creativity & Tech Showcase",
+    //title: "Student Creativity & Tech Showcase",
     shortDescription: "An open exhibition where students present interactive web apps, creative digital design, utility tools, and hardware projects built this semester.",
     category: "Showcase",
     date: "December 05, 2026",
