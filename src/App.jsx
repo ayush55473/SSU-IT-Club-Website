@@ -7,6 +7,7 @@ import { ClubJourney } from './components/ClubJourney';
 import { UpcomingEvents } from './components/UpcomingEvents';
 import { Announcements } from './components/Announcements';
 import { EventRegistration } from './components/EventRegistration';
+import { ProjectProposal } from './components/ProjectProposal';
 import { TeamMembers } from './components/TeamMembers';
 import { Contact } from './components/Contact';
 import { Footer } from './components/Footer';
@@ -92,6 +93,9 @@ export function App() {
 
         {/* Event Registration Interface */}
         <EventRegistration preselectedEvent={preselectedEvent} />
+
+        {/* Project Proposals & Campus Innovation Hub */}
+        <ProjectProposal />
 
         {/* Executive Team Members & Contact Details */}
         <TeamMembers />

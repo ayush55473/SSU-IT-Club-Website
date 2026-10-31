@@ -20,7 +20,7 @@ export const CLUB_INFO = {
 
   // Social Media Links (Update URLs with your actual profiles, or set to null to hide)
   socialLinks: {
-    instagram: "https://www.instagram.com/itclubssu?utm_source=qr&dlrf=aWw3Y3cyaHpobHM3",
+    instagram: "https://instagram.com/university_itclub",
     linkedin: "https://linkedin.com/company/university-it-club",
     youtube: "https://youtube.com/@universityitclub",
     github: "https://github.com/university-it-club",

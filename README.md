@@ -138,17 +138,26 @@ The platform strictly adheres to the university club's three-color visual identi
 - Fires a celebratory multi-colored confetti burst (`canvas-confetti`) upon completion.
 - Produces a printable, branded confirmation pass with a unique ticket identifier (`ITCLUB-XXX-####`).
 
-### 👥 9. Executive Committee Carousel (`TeamMembers.jsx` & `MemberCard.jsx`)
+### 💡 9. Student & Faculty Project Proposal Incubation Hub (`ProjectProposal.jsx`, `sampleProposals.js`, `projectProposals.js`)
+- **Direct Collaboration with IT Cell**: Allows any student or faculty member across the university to propose project ideas or departmental automation systems for the IT Cell to build.
+- **Interactive Role Switcher**: Dedicated toggle between **Student Proposal** (Degree, Semester, Roll No) and **Faculty / Staff Lead** (Department, Faculty Employee Code).
+- **Core Problem & Solution Scope**: Captures project title, primary technology domain, concise problem statement, in-depth context explanation, and target timeline.
+- **Interactive Solution Objectives Builder**: Dynamic checklist builder where proposers add specific deliverables and pain points to be solved with quick-add suggestion chips.
+- **Real-Time Live Blueprint Card**: Sticky side container displaying a live readiness meter (0%–100%), real-time proposal summary, domain tag, and review roadmap.
+- **Interactive Sample Proposals Catalog**: Collapsible drawer with real-world sample proposals that can be loaded into the form with one click.
+- **Celebratory Confirmation & Pass**: Fires `canvas-confetti`, assigns a tracking ticket ID (`SSU-ITP-STU-####` or `SSU-ITP-FAC-####`), saves to browser storage, and provides a printable receipt.
+
+### 👥 10. Executive Committee Carousel (`TeamMembers.jsx` & `MemberCard.jsx`)
 - Continuous **Left-to-Right moving card carousel** creating visual rhythm opposite to the events carousel.
 - Displays student leader portraits, designations, department tags, and bios.
 - Click-to-call (`tel:`), click-to-email (`mailto:`), and LinkedIn profile links.
 
-### 📬 10. Contact & Community Hub (`Contact.jsx` & `Footer.jsx`)
+### 📬 11. Contact & Community Hub (`Contact.jsx` & `Footer.jsx`)
 - Campus location details, official email, phone numbers, and office hours.
 - Interactive contact dispatch form with validation and submission confirmation.
 - Footer with dual logos, quick links, replay intro button, back-to-top button, and dynamic copyright year.
 
-### ♿ 11. Accessibility & Performance Polish
+### ♿ 12. Accessibility & Performance Polish
 - **Custom Cursor Follower** (`CustomCursor.jsx`): Dual-ring desktop follower that expands over clickable elements; automatically disabled on touch devices.
 - **Reduced Motion Compliance**: All keyframe carousels, marquees, Three.js rotations, and scroll animations respect `prefers-reduced-motion: reduce`.
 - **Keyboard & Screen Reader Friendly**: Accessible ARIA labels, modal focus trapping, and duplicate carousel elements marked with `aria-hidden="true"`.
@@ -216,6 +225,7 @@ SSU-IT-Club-Website/
 │   │   ├── IntroAnimation.jsx  # Cinematic two-logo launch sequence
 │   │   ├── MemberCard.jsx      # Individual team profile card
 │   │   ├── Navbar.jsx          # Sticky header with active indicator
+│   │   ├── ProjectProposal.jsx # Student & Faculty project suggestion incubator (#proposals)
 │   │   ├── SocialIcons.jsx     # Vector social platform icons
 │   │   ├── TeamMembers.jsx     # Executive committee carousel (#team)
 │   │   └── UpcomingEvents.jsx  # Event showcase carousel (#events)
@@ -223,8 +233,10 @@ SSU-IT-Club-Website/
 │   │   ├── announcements.js    # Data store: Bulletins, pinned notices, dates
 │   │   ├── clubInfo.js         # Data store: University info, contacts, social URLs
 │   │   ├── events.js           # Data store: Events, dates, venues, seat counts
-│   │   └── members.js          # Data store: Executive team details & bios
+│   │   ├── members.js          # Data store: Executive team details & bios
+│   │   └── sampleProposals.js  # Domains, branch options, and sample proposal templates
 │   ├── utils/
+│   │   ├── projectProposals.js # Proposal validator & ticket generator
 │   │   └── registration.js     # Form validation rules & ticket generator
 │   ├── App.jsx                 # Master application layout orchestrator
 │   ├── index.css               # Global Tailwind directives & carousel keyframes
@@ -542,5 +554,5 @@ This project and its assets are maintained for the **Sri Sri University IT Club*
 ---
 
 <div align="center">
-  <sub>Developed by the students of <strong>Sri Sri University IT Club</strong> • 2026–2027</sub>
+  <sub>Developed with ❤️ by the students of <strong>Sri Sri University IT Club</strong> • 2026–2027</sub>
 </div>

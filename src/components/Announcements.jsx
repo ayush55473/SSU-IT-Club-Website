@@ -204,13 +204,13 @@ export function Announcements() {
             </p>
           </div>
 
-          /* {/* Admin Source Badge */}
+          {/* Admin Source Badge */}
           <div className="text-xs font-mono text-[#D8A54E] bg-[#140C0A] px-4 py-2.5 rounded-xl border border-[#AE7B29]/40 shadow-xs flex items-center gap-2 shrink-0">
             <Radio className="w-3.5 h-3.5 text-[#AE7B29] animate-pulse" />
             <span>Admin Feed:</span>
             <code className="text-white font-bold">src/data/announcements.js</code>
           </div>
-        </div> */
+        </div>
 
         {/* =================================================================== */}
         {/* 4. CATEGORY FILTER TABS WITH SPRING INDICATOR */}

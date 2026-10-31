@@ -35,6 +35,7 @@ export function Footer({ onReplayIntro }) {
     { label: 'Our Team', href: '#team' },
     { label: 'Contact', href: '#contact' },
     { label: 'Register', href: '#registration' },
+    { label: 'Propose Project', href: '#proposals' },
   ];
 
   return (

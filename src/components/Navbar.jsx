@@ -19,7 +19,7 @@ export function Navbar({ onSelectNav, isIntroActive = false }) {
       setIsScrolled(window.scrollY > 25);
 
       // Track active section based on scroll position accounting for sticky header offset
-      const sections = ['hero', 'about', 'journey', 'announcements', 'events', 'team', 'contact'];
+      const sections = ['hero', 'about', 'journey', 'announcements', 'events', 'proposals', 'team', 'contact'];
       const scrollPos = window.scrollY + 140;
 
       for (let i = sections.length - 1; i >= 0; i--) {
@@ -45,6 +45,7 @@ export function Navbar({ onSelectNav, isIntroActive = false }) {
     { label: 'Journey', href: '#journey', id: 'journey' },
     { label: 'Announcements', href: '#announcements', id: 'announcements' },
     { label: 'Events', href: '#events', id: 'events' },
+    { label: 'Propose Project', href: '#proposals', id: 'proposals' },
     { label: 'Our Team', href: '#team', id: 'team' },
     { label: 'Contact', href: '#contact', id: 'contact' },
   ];
