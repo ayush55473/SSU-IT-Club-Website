@@ -330,7 +330,7 @@ export function EventRegistration({ preselectedEvent }) {
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleChange}
-                      placeholder="e.g. Sarah Jenkins"
+                      placeholder="e.g. Anannya"
                       className={`w-full pl-10 pr-4 py-3 rounded-xl bg-[#FAF6F4] text-sm text-[#2B1209] transition-all outline-none border ${
                         errors.fullName ? 'border-red-500 ring-1 ring-red-500' : 'border-[rgba(103,44,28,0.15)] focus:border-[#AE7B29]'
                       }`}
@@ -357,7 +357,7 @@ export function EventRegistration({ preselectedEvent }) {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      placeholder="student@university.edu"
+                      placeholder="student.fsc@srisriuniversity.edu.in"
                       className={`w-full pl-10 pr-4 py-3 rounded-xl bg-[#FAF6F4] text-sm text-[#2B1209] transition-all outline-none border ${
                         errors.email ? 'border-red-500 ring-1 ring-red-500' : 'border-[rgba(103,44,28,0.15)] focus:border-[#AE7B29]'
                       }`}
