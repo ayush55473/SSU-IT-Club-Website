@@ -22,6 +22,17 @@ export function AnnouncementModal({ announcement, isOpen, onClose }) {
           <X className="w-5 h-5" />
         </button>
 
+        {/* Banner Image if available */}
+        {(announcement.banner_url || announcement.bannerUrl) && (
+          <div className="mb-4 rounded-2xl overflow-hidden max-h-56 border border-[#AE7B29]/30 shadow-xs">
+            <img
+              src={announcement.banner_url || announcement.bannerUrl}
+              alt={announcement.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
         {/* Category & Date Header */}
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FAF6F4] text-[#672C1C] border border-[#AE7B29]/40">

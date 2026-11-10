@@ -1,11 +1,4 @@
-/**
- * ==============================================================================
- * SRI SRI UNIVERSITY IT CELL — PROJECT PROPOSAL HANDLER & VALIDATOR
- * ==============================================================================
- * 
- * Handles client-side validation, ticket code generation, and local persistence
- * for student and faculty project proposals submitted to the IT Cell.
- */
+import { submitProjectProposal } from '../services/contentService';
 
 export function validateProposalForm(formData) {
   const errors = {};
@@ -63,12 +56,7 @@ export function validateProposalForm(formData) {
 }
 
 /**
- * Submits the project proposal.
- * Simulates network transmission, generates a proposal ticket code,
- * and saves to localStorage.
- * 
- * @param {Object} proposalPayload
- * @returns {Promise<Object>}
+ * Submits the project proposal directly to the database.
  */
 export async function submitProposal(proposalPayload) {
   const validation = validateProposalForm(proposalPayload);
@@ -80,12 +68,10 @@ export async function submitProposal(proposalPayload) {
     };
   }
 
-  // Realistic network simulation
-  await new Promise(resolve => setTimeout(resolve, 850));
+  // Save to private database via contentService
+  const res = await submitProjectProposal(proposalPayload);
+  const ticketCode = res.ticketCode || `PRJ-${Math.floor(1000 + Math.random() * 9000)}`;
 
-  const randomNum = Math.floor(1000 + Math.random() * 9000);
-  const rolePrefix = proposalPayload.role === 'faculty' ? 'FAC' : 'STU';
-  const proposalId = `SSU-ITP-${rolePrefix}-${randomNum}`;
   const timestamp = new Date().toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -95,10 +81,9 @@ export async function submitProposal(proposalPayload) {
     hour12: true
   });
 
-  const responseData = {
+  return {
     success: true,
-    isLocalDemo: true,
-    proposalId,
+    proposalId: ticketCode,
     timestamp,
     proposer: {
       role: proposalPayload.role,
@@ -121,18 +106,4 @@ export async function submitProposal(proposalPayload) {
     status: "Under Technical Review by IT Cell",
     reviewSLA: "Within 48–72 hours"
   };
-
-  // Safely persist to browser localStorage for user convenience
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const existing = JSON.parse(localStorage.getItem('ssu_it_club_proposals') || '[]');
-      existing.unshift(responseData);
-      // Keep up to 10 recent submissions
-      localStorage.setItem('ssu_it_club_proposals', JSON.stringify(existing.slice(0, 10)));
-    }
-  } catch (e) {
-    console.warn("Could not save proposal to localStorage:", e);
-  }
-
-  return responseData;
 }

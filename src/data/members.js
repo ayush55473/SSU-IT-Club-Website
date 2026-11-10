@@ -2,92 +2,59 @@
  * ==============================================================================
  * UNIVERSITY IT CLUB — EXECUTIVE & TEAM MEMBERS DATA
  * ==============================================================================
- * 
- * ------------------------------------------------------------------------------
- * INSTRUCTIONS FOR CUSTOMIZATION:
- * ------------------------------------------------------------------------------
- * 1. HOW TO ADD A NEW MEMBER:
- *    - Add a new object inside the `MEMBERS` array below.
- *    - Provide a unique `id`, name, role, department, bio, etc.
- * 
- * 2. HOW TO REPLACE A MEMBER PHOTOGRAPH:
- *    - Place your photo file (e.g. member-1.jpg, member-2.png) inside:
- *      `src/assets/members/`
- *    - Import your photo at the top of this file:
- *      `import member1Photo from '../assets/members/member-1.jpg';`
- *    - Update the `image` property of that member:
- *      `image: member1Photo,`
- * 
- * 3. HOW TO CHANGE THE MEMBER'S NAME:
- *    - Edit the `name` string (e.g. `name: "Jane Doe"`).
- * 
- * 4. HOW TO UPDATE THE DESIGNATION / ROLE:
- *    - Edit the `role` string (e.g. `role: "Club President"`).
- * 
- * 5. HOW TO UPDATE CONTACT NUMBER:
- *    - Edit the `phone` string (e.g. `phone: "+1 (555) 234-5678"`).
- *    - If left empty `""` or `null`, the phone icon & link will NOT be shown.
- *    - It uses the standard `tel:` protocol for click-to-call on mobile.
- * 
- * 6. HOW TO UPDATE EMAIL ADDRESS:
- *    - Edit the `email` string (e.g. `email: "president@university-itclub.edu"`).
- *    - If left empty `""` or `null`, the email icon & link will NOT be shown.
- *    - It uses the standard `mailto:` protocol.
- * 
- * 7. HOW TO ADD OR REMOVE SOCIAL MEDIA LINKS:
- *    - Set `linkedin: "https://linkedin.com/in/username"` to display a link.
- *    - Set `linkedin: null` to hide the link.
- * ------------------------------------------------------------------------------
+ * All member photographs, roles, emails, and LinkedIn URLs are now managed
+ * dynamically via the Supabase database and Admin Portal CMS.
+ * No static image imports or hardcoded local photo paths are used.
+ * ==============================================================================
  */
-
-import member1Img from '../assets/members/member-1.svg';
-import member2Img from '../assets/members/member-2.svg';
-import member3Img from '../assets/members/member-3.svg';
-import member4Img from '../assets/members/member-4.svg';
-import member5Img from '../assets/members/member-5.svg';
-import member6Img from '../assets/members/member-6.svg';
 
 export const MEMBERS = [
   {
     id: "member-1",
-    // Name placeholder: Replace with actual student name
-    name: "[ Student Name Placeholder ]",
-    role: "Club President",
-    department: "Department of Computer Science & Engineering",
-    yearOfStudy: "Final Year Undergraduate",
+    name: "Sanchita Padhi",
+    role: "Frontend Designer",
+    department: "Faculty of Engineering and Technology",
+    branch: "Computer Science and Engineering",
+    yearOfStudy: "2nd Year",
     bio: "Passionate about student tech leadership, organizing university-wide innovation events, and creating open peer collaboration opportunities.",
-    // Image placeholder: Replace with src/assets/members/member-1.jpg
-    image: member1Img,
-    // Contact details: Displayed only when provided (clickable tel: & mailto:)
-    email: "president.itclub@university.edu",
-    phone: "+1 (555) 019-2831",
-    linkedin: "https://linkedin.com/in/sample-president",
-    isPlaceholder: true // Set to false once real details are filled
+    image: null,
+    image_url: null,
+    email: "sanchitap.etbts25@srisriuniversity.edu.in",
+    phone: null,
+    linkedin: "https://linkedin.com/in/sanchita-padhi-8aba41332",
+    linkedin_url: "https://linkedin.com/in/sanchita-padhi-8aba41332",
+    isPlaceholder: false
   },
   {
     id: "member-2",
-    name: "[ Student Name Placeholder ]",
-    role: "Vice President",
-    department: "Department of Information Technology",
-    yearOfStudy: "Third Year Undergraduate",
+    name: "Ayush Singh",
+    role: "Frontend Developer",
+    department: "Faculty of Engineering and Technology",
+    branch: "Computer Science and Engineering",
+    yearOfStudy: "2nd Year",
     bio: "Focuses on club operations, faculty coordination, and building cross-departmental technology initiatives and student workshops.",
-    image: member2Img,
-    email: "vp.itclub@university.edu",
-    phone: "+1 (555) 019-2832",
-    linkedin: "https://linkedin.com/in/sample-vp",
-    isPlaceholder: true
+    image: null,
+    image_url: null,
+    email: "ayushs.etbts25@srisriuniversity.edu.in",
+    phone: null,
+    linkedin: "https://linkedin.com/in/ayush-singh-29a3a8409",
+    linkedin_url: "https://linkedin.com/in/ayush-singh-29a3a8409",
+    isPlaceholder: false
   },
   {
     id: "member-3",
-    name: "[ Student Name Placeholder ]",
-    role: "Event Coordinator",
-    department: "Department of Software Engineering",
-    yearOfStudy: "Third Year Undergraduate",
+    name: "Shaswata Biswal",
+    role: "Quality Assurance & Tester",
+    department: "Faculty of Engineering and Technology",
+    branch: "Computer Science and Engineering",
+    yearOfStudy: "2nd Year",
     bio: "Oversees planning and logistics for seminars, student exhibitions, tech quizzes, and venue setups across the campus.",
-    image: member3Img,
+    image: null,
+    image_url: null,
     email: "events.itclub@university.edu",
-    phone: "+1 (555) 019-2833",
+    phone: null,
     linkedin: "https://linkedin.com/in/sample-events",
+    linkedin_url: "https://linkedin.com/in/sample-events",
     isPlaceholder: true
   },
   {
@@ -95,12 +62,15 @@ export const MEMBERS = [
     name: "[ Student Name Placeholder ]",
     role: "Technical Coordinator",
     department: "Department of Computer Science",
+    branch: "Information Technology",
     yearOfStudy: "Third Year Undergraduate",
     bio: "Coordinates technical content for workshops, hands-on coding sessions, mentorship tables, and club digital assets.",
-    image: member4Img,
+    image: null,
+    image_url: null,
     email: "technical.itclub@university.edu",
-    phone: "+1 (555) 019-2834",
+    phone: null,
     linkedin: "https://linkedin.com/in/sample-technical",
+    linkedin_url: "https://linkedin.com/in/sample-technical",
     isPlaceholder: true
   },
   {
@@ -108,12 +78,15 @@ export const MEMBERS = [
     name: "[ Student Name Placeholder ]",
     role: "Creative & Media Coordinator",
     department: "Department of Digital Media & Design",
+    branch: "Digital Media",
     yearOfStudy: "Second Year Undergraduate",
     bio: "Directs visual design, event posters, media coverage, student photography, and club presentation branding.",
-    image: member5Img,
+    image: null,
+    image_url: null,
     email: "media.itclub@university.edu",
-    phone: null, // Example: phone omitted
+    phone: null,
     linkedin: "https://linkedin.com/in/sample-media",
+    linkedin_url: "https://linkedin.com/in/sample-media",
     isPlaceholder: true
   },
   {
@@ -121,12 +94,15 @@ export const MEMBERS = [
     name: "[ Student Name Placeholder ]",
     role: "Student Representative",
     department: "Department of Information Systems",
+    branch: "Information Systems",
     yearOfStudy: "Second Year Undergraduate",
     bio: "Acts as a bridge between freshman students and club activities, encouraging participation in campus tech events.",
-    image: member6Img,
+    image: null,
+    image_url: null,
     email: "representative.itclub@university.edu",
     phone: null,
-    linkedin: null, // Example: social omitted
+    linkedin: null,
+    linkedin_url: null,
     isPlaceholder: true
   }
 ];

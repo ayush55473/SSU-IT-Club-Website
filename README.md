@@ -147,10 +147,20 @@ The platform strictly adheres to the university club's three-color visual identi
 - **Interactive Sample Proposals Catalog**: Collapsible drawer with real-world sample proposals that can be loaded into the form with one click.
 - **Celebratory Confirmation & Pass**: Fires `canvas-confetti`, assigns a tracking ticket ID (`SSU-ITP-STU-####` or `SSU-ITP-FAC-####`), saves to browser storage, and provides a printable receipt.
 
-### 👥 10. Executive Committee Carousel (`TeamMembers.jsx` & `MemberCard.jsx`)
+### 👥 10. Executive Committee & Interactive Membership Hub (`TeamMembers.jsx`, `MemberCard.jsx`, `JoinTeamModal.jsx`, `ClubMembersModal.jsx`, `memberService.js`)
 - Continuous **Left-to-Right moving card carousel** creating visual rhythm opposite to the events carousel.
-- Displays student leader portraits, designations, department tags, and bios.
-- Click-to-call (`tel:`), click-to-email (`mailto:`), and LinkedIn profile links.
+- Displays student leader portraits, designations, department tags, and bios with click-to-call (`tel:`), click-to-email (`mailto:`), and LinkedIn links.
+- **"Join Us" Interactive Registration Form**:
+  - Modal form collecting Full Name, Faculty/Department, and Designation (Student, Faculty, Staff).
+  - **Dynamic Conditional Fields**: Selecting *Student* reveals Registration Number, Roll Number, and Branch; selecting *Faculty* or *Staff* cleanly hides student fields.
+  - Form validation with descriptive error feedback and duplicate registration prevention.
+  - Confetti celebration upon registration and dynamic persistence via `localStorage`.
+- **"View Our Club Members" Searchable Directory**:
+  - Professional tabular directory with columns: `| S.No. | Name | Faculty | Designation | Registration No. | Roll No. | Branch |`.
+  - Automatically displays `N/A` in student columns for Faculty and Staff members.
+  - Real-time search by name, faculty, designation, or branch with designation filter tabs (`All`, `Students`, `Faculty`, `Staff`).
+  - Interactive multi-column ascending/descending sorting and CSV export functionality.
+  - Fully responsive with mobile card toggling and clean empty-state fallback.
 
 ### 📬 11. Contact & Community Hub (`Contact.jsx` & `Footer.jsx`)
 - Campus location details, official email, phone numbers, and office hours.

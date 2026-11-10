@@ -1,0 +1,24 @@
+# ==============================================================================
+# SRI SRI UNIVERSITY (SSU) IT CLUB — REPOSITORY CODE OWNERSHIP POLICY
+# ==============================================================================
+# Automatically requires the Repository Owner (@ayush55473) to review and
+# approve pull requests before they can be merged into production branches.
+# ==============================================================================
+
+# Global Default Owner for entire repository
+* @ayush55473
+
+# Critical Security & Database Configurations
+/supabase_setup.sql @ayush55473
+/.env.example @ayush55473
+/vercel.json @ayush55473
+
+# Core Authentication & Administrative Access Control
+/src/services/adminAuthService.js @ayush55473
+/src/lib/supabase.js @ayush55473
+
+# Project Architecture, Dependencies & Build Configuration
+/package.json @ayush55473
+/package-lock.json @ayush55473
+/vite.config.ts @ayush55473
+/.github/ @ayush55473

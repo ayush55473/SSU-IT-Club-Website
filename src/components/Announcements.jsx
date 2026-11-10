@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { 
   Bell, 
@@ -10,12 +10,13 @@ import {
   Radio, 
   Pause, 
   Play, 
-  MoveLeft
+  Clock,
+  Compass
 } from 'lucide-react';
-import { ANNOUNCEMENTS, ANNOUNCEMENT_CATEGORIES } from '../data/announcements';
 import { AnnouncementModal } from './AnnouncementModal';
+import { getAnnouncements, subscribeToCmsUpdates } from '../services/contentService';
 
-// Dedicated moving announcement card component (STRICTLY TEXT-BASED, NO IMAGES)
+// Dedicated moving announcement card component (TEXT-BASED)
 function AnnouncementCard({ item, isDuplicate = false, onOpenModal }) {
   return (
     <article
@@ -43,11 +44,11 @@ function AnnouncementCard({ item, isDuplicate = false, onOpenModal }) {
         {/* Category & Date Header */}
         <div className="flex flex-wrap items-center gap-3 mb-4 text-xs">
           <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#672C1C] text-[#D8A54E] border border-[#AE7B29]/50 shadow-2xs">
-            {item.category}
+            {item.category || 'General'}
           </span>
           <span className="text-stone-400 font-mono flex items-center gap-1.5 text-xs">
             <Calendar className="w-3.5 h-3.5 text-[#AE7B29]" />
-            {item.date}
+            {item.publish_date ? new Date(item.publish_date).toLocaleDateString() : 'Active'}
           </span>
         </div>
 
@@ -56,9 +57,9 @@ function AnnouncementCard({ item, isDuplicate = false, onOpenModal }) {
           {item.title}
         </h3>
 
-        {/* Announcement Short Message (NO IMAGES) */}
+        {/* Announcement Short Message */}
         <p className="text-xs sm:text-sm text-stone-300 leading-relaxed line-clamp-4 font-normal">
-          {item.shortMessage}
+          {item.short_message || item.shortMessage}
         </p>
       </div>
 
@@ -66,7 +67,7 @@ function AnnouncementCard({ item, isDuplicate = false, onOpenModal }) {
       <div className="pt-4 border-t border-[rgba(174,123,41,0.2)] flex items-center justify-between gap-3 bg-[#0D0705]/80">
         <span className="text-xs text-stone-400 font-medium flex items-center gap-1.5 truncate">
           <User className="w-3.5 h-3.5 text-[#AE7B29] shrink-0" />
-          <span className="truncate">By {item.author}</span>
+          <span className="truncate">By {item.author || 'IT Club Core'}</span>
         </span>
 
         <button
@@ -87,18 +88,42 @@ export function Announcements() {
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { amount: 0.15 });
 
+  const [announcements, setAnnouncements] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isManuallyPaused, setIsManuallyPaused] = useState(false);
 
+  // Fetch published announcements dynamically
+  const fetchPublishedAnnouncements = async () => {
+    try {
+      const data = await getAnnouncements({ publishedOnly: true });
+      setAnnouncements(data);
+    } catch (err) {
+      console.error("Failed to load published announcements:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPublishedAnnouncements();
+    const unsubscribe = subscribeToCmsUpdates((detail) => {
+      if (!detail || detail.section === 'announcements') {
+        fetchPublishedAnnouncements();
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   // Filter announcements based on active category
-  const filteredAnnouncements = ANNOUNCEMENTS.filter((item) => {
+  const filteredAnnouncements = announcements.filter((item) => {
     return activeCategory === 'All' || item.category === activeCategory;
   });
 
-  // Ensure minimum 6 cards per set so the track is always wider than any display
+  // Ensure minimum 6 cards per set so the conveyor is seamless
   const getDisplayAnnouncements = () => {
     if (filteredAnnouncements.length === 0) return [];
     let list = [...filteredAnnouncements];
@@ -109,8 +134,6 @@ export function Announcements() {
   };
 
   const displayList = getDisplayAnnouncements();
-
-  // Carousel is paused when hovered, manually paused, or outside of viewport
   const isPaused = isHovered || isManuallyPaused || !isInView;
 
   const handleOpenModal = (announcement) => {
@@ -127,29 +150,98 @@ export function Announcements() {
   const topMarqueeText = "OFFICIAL BULLETINS ✦ ANNOUNCEMENTS ✦ SSU IT CLUB DISPATCHES ✦ CAMPUS TECH UPDATES ✦ REAL-TIME NOTICES ✦ ";
   const bottomMarqueeText = "WHERE IDEAS MEET INNOVATION ◆ SRI SRI UNIVERSITY IT CLUB ◆ CONNECT • COLLABORATE • CREATE ◆ ACADEMIC YEAR 2026-2027 ◆ ";
 
+  // Categories list
+  const categories = ['All', ...Array.from(new Set(announcements.map(a => a.category).filter(Boolean)))];
+
+  // =========================================================================
+  // INITIAL STATE REQUIREMENT:
+  // When no announcements are published (length === 0), display the animated
+  // "EXCITING ANNOUNCEMENTS COMING SOON!" section.
+  // =========================================================================
+  if (!isLoading && announcements.length === 0) {
+    return (
+      <section 
+        id="announcements" 
+        ref={sectionRef}
+        className="py-24 lg:py-32 bg-[#000000] text-white relative overflow-hidden selection:bg-[#AE7B29] selection:text-black"
+      >
+        {/* Background ambient lighting */}
+        <div className="absolute inset-0 bg-[radial-gradient(rgba(174,123,41,0.15)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none opacity-40" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[450px] bg-gradient-to-b from-[#672C1C]/30 via-[#AE7B29]/15 to-transparent rounded-full blur-3xl pointer-events-none" />
+
+        {/* Top & Bottom gold hairlines */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#AE7B29]/60 to-transparent z-10" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#AE7B29]/60 to-transparent z-10" />
+
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          
+          {/* Subtle Radar Wave Animation */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6 rounded-3xl bg-gradient-to-tr from-[#672C1C] via-[#AE7B29] to-[#D8A54E] p-0.5 shadow-[0_0_40px_rgba(174,123,41,0.35)] relative flex items-center justify-center"
+          >
+            <div className="w-full h-full bg-[#0D0705] rounded-[22px] flex items-center justify-center relative overflow-hidden">
+              <span className="absolute inset-0 rounded-[22px] bg-[#AE7B29]/20 animate-ping opacity-30" />
+              <Radio className="w-10 h-10 text-[#D8A54E] relative z-10 animate-pulse" />
+            </div>
+          </motion.div>
+
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-mono font-bold tracking-widest uppercase bg-[#672C1C]/60 text-[#D8A54E] border border-[#AE7B29]/40 mb-4 shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 text-[#D8A54E]" />
+            <span>OFFICIAL IT CLUB DISPATCHES</span>
+          </div>
+
+          {/* Exact Required Heading */}
+          <motion.h2 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-3xl sm:text-5xl lg:text-6xl font-serif font-bold text-white tracking-tight uppercase mb-4"
+          >
+            EXCITING ANNOUNCEMENTS <br />
+            <span className="text-gold-gradient italic">COMING SOON!</span>
+          </motion.h2>
+
+          {/* Exact Required Description */}
+          <motion.p
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-sm sm:text-lg text-stone-300 max-w-2xl mx-auto leading-relaxed font-sans"
+          >
+            Something exciting is brewing at SSU IT Club. Stay connected with us for upcoming updates, opportunities, and important announcements.
+          </motion.p>
+
+          {/* Subtle Live Beacon Indicator */}
+          <div className="mt-8 inline-flex items-center gap-2 text-xs font-mono text-stone-400 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Central Admin CMS Connected • Automatic Live Synchronization</span>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // =========================================================================
+  // DYNAMIC STATE: When announcements ARE published, render the moving marquee!
+  // =========================================================================
   return (
     <section 
       id="announcements" 
       ref={sectionRef}
       className="py-20 lg:py-28 bg-[#000000] text-white relative overflow-hidden selection:bg-[#AE7B29] selection:text-black"
     >
-      {/* =================================================================== */}
-      {/* 1. BACKGROUND GEOMETRIC PATTERNS & AMBIENT GLOW */}
-      {/* =================================================================== */}
-      {/* Subtle geometric dot grid pattern */}
+      {/* 1. Background geometric patterns & ambient glow */}
       <div className="absolute inset-0 bg-[radial-gradient(rgba(174,123,41,0.14)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none opacity-50 z-0" />
-
-      {/* Ambient warm gradient orbs */}
       <div className="absolute top-1/4 -left-48 w-96 h-96 bg-[rgba(103,44,28,0.22)] rounded-full blur-3xl pointer-events-none z-0" />
       <div className="absolute bottom-1/4 -right-48 w-96 h-96 bg-[rgba(174,123,41,0.15)] rounded-full blur-3xl pointer-events-none z-0" />
-
-      {/* Top & Bottom gold hairlines */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#AE7B29]/60 to-transparent z-10" />
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#AE7B29]/60 to-transparent z-10" />
 
-      {/* =================================================================== */}
-      {/* 2. LAYERED BACKGROUND KINETIC TYPOGRAPHY MARQUEE (Behind Cards) */}
-      {/* =================================================================== */}
+      {/* Kinetic Typography Layer */}
       <div className="relative w-full overflow-hidden mb-8 select-none border-b border-[rgba(174,123,41,0.2)] pb-3 z-0 pointer-events-none">
         <div className="animate-marquee-left flex whitespace-nowrap opacity-30">
           <span className="text-5xl sm:text-7xl lg:text-8xl font-black uppercase tracking-tight text-stroke-gold px-4">
@@ -158,212 +250,105 @@ export function Announcements() {
           <span className="text-5xl sm:text-7xl lg:text-8xl font-black uppercase tracking-tight text-[#AE7B29]/70 px-4">
             {topMarqueeText}
           </span>
-          <span className="text-5xl sm:text-7xl lg:text-8xl font-black uppercase tracking-tight text-stroke-gold px-4">
-            {topMarqueeText}
-          </span>
-          <span className="text-5xl sm:text-7xl lg:text-8xl font-black uppercase tracking-tight text-[#AE7B29]/70 px-4">
-            {topMarqueeText}
-          </span>
-        </div>
-
-        {/* Animated Geometric Pattern Ribbon (Chevron/Zigzag wireframe strip) */}
-        <div className="mt-2 py-1.5 bg-[#0A0503] border-y border-[rgba(174,123,41,0.3)] overflow-hidden">
-          <div className="animate-marquee-right flex items-center whitespace-nowrap gap-6 text-[11px] font-mono tracking-widest text-[#AE7B29]">
-            <span>▲ ▼ ▲ ▼ ▲ ▼ ✦ ❖ ✦ ▲ ▼ ▲ ▼ ▲ ▼ ✦ ❖ ✦ SYSTEM BULLETIN BROADCAST // DEPT. OF CS &amp; IT // REAL-TIME DISPATCH</span>
-            <span>▲ ▼ ▲ ▼ ▲ ▼ ✦ ❖ ✦ ▲ ▼ ▲ ▼ ▲ ▼ ✦ ❖ ✦ SYSTEM BULLETIN BROADCAST // DEPT. OF CS &amp; IT // REAL-TIME DISPATCH</span>
-            <span>▲ ▼ ▲ ▼ ▲ ▼ ✦ ❖ ✦ ▲ ▼ ▲ ▼ ▲ ▼ ✦ ❖ ✦ SYSTEM BULLETIN BROADCAST // DEPT. OF CS &amp; IT // REAL-TIME DISPATCH</span>
-          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
-        {/* =================================================================== */}
-        {/* 3. SECTION HEADING & EDITORIAL DISPATCH HEADER */}
-        {/* =================================================================== */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 mb-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="max-w-2xl">
-            {/* Live Status Pill Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold uppercase tracking-widest text-[#D8A54E] bg-[#140C0A] border border-[#AE7B29]/50 mb-3 shadow-[0_0_15px_rgba(174,123,41,0.25)]">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#AE7B29] opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#D8A54E]" />
-              </span>
-              <Bell className="w-3.5 h-3.5 text-[#AE7B29]" />
-              <span>OFFICIAL DISPATCHES // BULLETINS</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider text-[#D8A54E] bg-[#672C1C]/60 border border-[#AE7B29]/50 mb-3 shadow-2xs">
+              <Radio className="w-3.5 h-3.5 text-[#AE7B29] animate-pulse" />
+              <span>LIVE NOTICES &amp; BULLETINS</span>
             </div>
 
-            {/* Headline */}
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-serif text-white tracking-tight mb-3">
-              Latest{' '}
-              <span className="text-gold-gradient italic font-serif">Announcements</span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-serif text-white tracking-tight uppercase">
+              Club Announcements &amp;{' '}
+              <span className="text-gold-gradient italic">Bulletins</span>
             </h2>
-
-            <p className="text-base sm:text-lg text-stone-300 leading-relaxed font-normal">
-              Key updates, future event notices, registration deadlines, and club initiatives moving continuously from right to left—hover any card to pause and read.
-            </p>
           </div>
 
-          {/* Admin Source Badge */}
-          <div className="text-xs font-mono text-[#D8A54E] bg-[#140C0A] px-4 py-2.5 rounded-xl border border-[#AE7B29]/40 shadow-xs flex items-center gap-2 shrink-0">
-            <Radio className="w-3.5 h-3.5 text-[#AE7B29] animate-pulse" />
-            <span>Admin Feed:</span>
-            <code className="text-white font-bold">src/data/announcements.js</code>
+          {/* Pause / Resume Controls */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsManuallyPaused(prev => !prev)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-mono font-bold rounded-full bg-white/10 hover:bg-white/20 text-[#D8A54E] border border-[#AE7B29]/50 transition-all cursor-pointer"
+            >
+              {isManuallyPaused ? <Play className="w-3 h-3 fill-current" /> : <Pause className="w-3 h-3" />}
+              <span>{isManuallyPaused ? 'RESUME SCROLL' : 'PAUSE SCROLL'}</span>
+            </button>
           </div>
         </div>
 
-        {/* =================================================================== */}
-        {/* 4. CATEGORY FILTER TABS WITH SPRING INDICATOR */}
-        {/* =================================================================== */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none">
-          {ANNOUNCEMENT_CATEGORIES.map((cat) => {
-            const isSelected = activeCategory === cat;
-            return (
+        {/* Category Filter Tabs */}
+        {categories.length > 2 && (
+          <div className="flex flex-wrap gap-2 mt-6">
+            {categories.map((cat) => (
               <button
                 key={cat}
-                type="button"
                 onClick={() => setActiveCategory(cat)}
-                className={`relative px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#AE7B29] ${
-                  isSelected
-                    ? 'text-black'
-                    : 'text-stone-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10'
+                className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-bold uppercase transition-all ${
+                  activeCategory === cat
+                    ? 'bg-[#AE7B29] text-black shadow-md'
+                    : 'bg-white/5 hover:bg-white/10 text-stone-300 border border-white/10'
                 }`}
               >
-                {isSelected && (
-                  <motion.div
-                    layoutId="activeAnnouncementCat"
-                    className="absolute inset-0 bg-[#AE7B29] border border-[#D8A54E] rounded-full shadow-[0_0_15px_rgba(174,123,41,0.4)]"
-                    transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                  />
-                )}
-                <span className="relative z-10 font-bold">{cat}</span>
+                {cat}
               </button>
-            );
-          })}
-        </div>
-
-        {/* =================================================================== */}
-        {/* 5. INTERACTIVE CAROUSEL CONTROL & STATUS BAR */}
-        {/* =================================================================== */}
-        <div className="flex items-center justify-between gap-3 mb-6 px-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-stone-300">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                isPaused ? 'bg-amber-400' : 'bg-emerald-500'
-              }`} />
-              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
-                isPaused ? 'bg-amber-500' : 'bg-emerald-600'
-              }`} />
-            </span>
-            <span className="font-semibold text-white flex items-center gap-1.5">
-              {isPaused ? 'Conveyor Paused' : 'Live Right-to-Left Card Stream'}
-              <MoveLeft className="w-3.5 h-3.5 text-[#AE7B29]" />
-            </span>
-            <span className="hidden sm:inline text-[#AE7B29] font-normal">
-              • {isHovered ? 'Paused for reading notice' : 'Hover any card to pause & explore'}
-            </span>
+            ))}
           </div>
-
-          {/* Manual Play / Pause Button */}
-          <button
-            type="button"
-            onClick={() => setIsManuallyPaused(!isManuallyPaused)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white bg-[#140C0A] border border-[#AE7B29]/50 hover:bg-[#1E120F] transition-colors shadow-2xs focus:outline-none focus:ring-2 focus:ring-[#AE7B29]"
-            title={isManuallyPaused ? 'Resume auto-scroll' : 'Pause auto-scroll'}
-            aria-label={isManuallyPaused ? 'Resume carousel' : 'Pause carousel'}
-          >
-            {isManuallyPaused ? (
-              <>
-                <Play className="w-3 h-3 text-[#AE7B29] fill-[#AE7B29]" />
-                <span>Resume</span>
-              </>
-            ) : (
-              <>
-                <Pause className="w-3 h-3 text-[#AE7B29]" />
-                <span>Pause</span>
-              </>
-            )}
-          </button>
-        </div>
-
+        )}
       </div>
 
-      {/* ===================================================================== */}
-      {/* 6. CONTINUOUSLY MOVING ANNOUNCEMENT CARDS TRACK (RIGHT TO LEFT) */}
-      {/* ===================================================================== */}
-      {displayList.length > 0 ? (
-        <div className="relative w-full overflow-hidden py-4 z-10">
-          {/* Soft edge fade gradient masks to make cards enter & exit gracefully */}
-          <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-28 bg-gradient-to-r from-black via-black/90 to-transparent pointer-events-none z-20" />
-          <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-28 bg-gradient-to-l from-black via-black/90 to-transparent pointer-events-none z-20" />
+      {/* Moving Marquee Track */}
+      <div 
+        className="relative overflow-hidden group py-4"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Left & Right gradient edge fades */}
+        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-32 z-20 bg-gradient-to-r from-black via-black/80 to-transparent" />
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-32 z-20 bg-gradient-to-l from-black via-black/80 to-transparent" />
 
-          {/* Moving Cards Track: Travel horizontally from right to left */}
-          <div
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            onTouchStart={() => setIsHovered(true)}
-            onTouchEnd={() => setIsHovered(false)}
-            className={`animate-announcements-cards flex gap-6 sm:gap-8 px-4 ${
-              isPaused ? 'carousel-paused' : ''
-            }`}
-          >
-            {/* Track 1: Primary set of existing announcement cards */}
+        <div 
+          className="flex w-max will-change-transform"
+          style={{
+            animation: 'infiniteScroll 32s linear infinite',
+            animationPlayState: isPaused ? 'paused' : 'running',
+          }}
+        >
+          {/* First set */}
+          <div className="flex gap-6 pr-6">
             {displayList.map((item, idx) => (
               <AnnouncementCard
-                key={`primary-${item.id}-${idx}`}
+                key={`orig-${item.id || idx}`}
                 item={item}
-                isDuplicate={false}
                 onOpenModal={handleOpenModal}
               />
             ))}
+          </div>
 
-            {/* Track 2: Duplicate set of existing announcement cards for seamless infinite loop */}
+          {/* Duplicate set for infinite loop */}
+          <div className="flex gap-6 pr-6" aria-hidden="true">
             {displayList.map((item, idx) => (
               <AnnouncementCard
-                key={`duplicate-${item.id}-${idx}`}
+                key={`dup-${item.id || idx}`}
                 item={item}
-                isDuplicate={true}
+                isDuplicate
                 onOpenModal={handleOpenModal}
               />
             ))}
           </div>
         </div>
-      ) : (
-        /* Empty State */
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center text-stone-400">
-          No announcements found in this category.
-        </div>
-      )}
-
-      {/* =================================================================== */}
-      {/* 7. BOTTOM CONTINUOUS MARQUEE TICKER (Opposite Direction) */}
-      {/* =================================================================== */}
-      <div className="relative w-full overflow-hidden mt-12 select-none border-t border-[rgba(174,123,41,0.25)] pt-4 z-0 pointer-events-none">
-        <div className="animate-marquee-right flex whitespace-nowrap opacity-30">
-          <span className="text-lg sm:text-xl lg:text-2xl font-mono font-bold uppercase tracking-widest text-[#AE7B29]/90 px-4">
-            {bottomMarqueeText}
-          </span>
-          <span className="text-lg sm:text-xl lg:text-2xl font-mono font-bold uppercase tracking-widest text-white/70 px-4">
-            {bottomMarqueeText}
-          </span>
-          <span className="text-lg sm:text-xl lg:text-2xl font-mono font-bold uppercase tracking-widest text-[#AE7B29]/90 px-4">
-            {bottomMarqueeText}
-          </span>
-          <span className="text-lg sm:text-xl lg:text-2xl font-mono font-bold uppercase tracking-widest text-white/70 px-4">
-            {bottomMarqueeText}
-          </span>
-        </div>
       </div>
 
-      {/* =================================================================== */}
-      {/* 8. FULL NOTICE MODAL (Preserved from Existing Component) */}
-      {/* =================================================================== */}
+      {/* Full Modal Viewer */}
       <AnnouncementModal
-        announcement={selectedAnnouncement}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+        announcement={selectedAnnouncement}
       />
-
     </section>
   );
 }
+
+export default Announcements;

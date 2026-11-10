@@ -12,6 +12,7 @@ import {
   ChevronRight,
   MousePointer2
 } from 'lucide-react';
+import { getJourneyMilestones, subscribeToCmsUpdates } from '../services/contentService';
 
 // Official SVG event/activity illustrations
 import techWorkshopImg from '../assets/events/tech-workshop.svg';
@@ -97,6 +98,41 @@ export function ClubJourney() {
   const [orbCoords, setOrbCoords] = useState({ x: 80, y: 380 });
   const [isReducedMotion, setIsReducedMotion] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [dynamicMilestones, setDynamicMilestones] = useState(MILESTONES);
+
+  useEffect(() => {
+    const fetchMilestones = async () => {
+      try {
+        const ms = await getJourneyMilestones(true);
+        if (ms && ms.length > 0) {
+          setDynamicMilestones(prev => {
+            return prev.map((orig, i) => {
+              const found = ms[i] || ms.find(m => m.step === orig.step);
+              if (!found) return orig;
+              return {
+                ...orig,
+                title: found.title || orig.title,
+                subtitle: found.subtitle || orig.subtitle,
+                description: found.description || orig.description,
+                phase: found.phase || orig.phase,
+                actionLabel: found.action_label || orig.actionLabel,
+                actionTarget: found.action_target || orig.actionTarget
+              };
+            });
+          });
+        }
+      } catch (err) {
+        console.warn("Could not load dynamic milestones:", err);
+      }
+    };
+    fetchMilestones();
+    const unsub = subscribeToCmsUpdates((detail) => {
+      if (!detail || detail.section === 'journey') {
+        fetchMilestones();
+      }
+    });
+    return () => unsub();
+  }, []);
 
   // Check user screen size and reduced motion preferences
   useEffect(() => {
@@ -192,7 +228,7 @@ export function ClubJourney() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {MILESTONES.map((m) => {
+            {dynamicMilestones.map((m) => {
               const Icon = m.icon;
               return (
                 <div key={m.id} className="bg-white rounded-2xl p-7 border border-[#AE7B29]/30 shadow-md">
@@ -349,7 +385,7 @@ export function ClubJourney() {
                 />
 
                 {/* 3. Dotted Connector Lines from Curve to Milestone Cards */}
-                {MILESTONES.map((m, idx) => {
+                {dynamicMilestones.map((m, idx) => {
                   const isActive = activeStage === idx;
                   const lineY2 = m.lineDir === "down" ? m.cardPos.y + 160 : m.cardPos.y + 120;
                   return (
@@ -368,7 +404,7 @@ export function ClubJourney() {
                 })}
 
                 {/* 4. Numbered Beacon Pins on the Path */}
-                {MILESTONES.map((m, idx) => {
+                {dynamicMilestones.map((m, idx) => {
                   const isActive = activeStage === idx;
                   return (
                     <g 
@@ -409,7 +445,7 @@ export function ClubJourney() {
               </svg>
 
               {/* Milestone Content Cards Along the Winding Path */}
-              {MILESTONES.map((m, idx) => {
+              {dynamicMilestones.map((m, idx) => {
                 const isActive = activeStage === idx;
                 const Icon = m.icon;
 
@@ -501,7 +537,7 @@ export function ClubJourney() {
           /* TABLET & MOBILE: FOCUSED STAGE SWITCHER WITH ZERO OVERFLOW */
           /* ================================================================= */
           <div className="relative w-full max-w-lg mx-auto my-auto py-2">
-            {MILESTONES.map((m, idx) => {
+            {dynamicMilestones.map((m, idx) => {
               if (activeStage !== idx) return null;
               const Icon = m.icon;
 

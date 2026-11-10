@@ -152,7 +152,7 @@ export function EventCard({
       {/* Top Banner & Image Container with Restrained Scale Reveal */}
       <div className="relative overflow-hidden aspect-[16/10] bg-[#FAF6F4] shrink-0">
         <img
-          src={event.image}
+          src={event.poster_url || event.banner_url || event.image_url || event.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80'}
           alt={isDuplicate ? '' : event.title}
           className={`w-full h-full object-cover transition-transform duration-700 ease-out ${
             isHovered ? 'scale-108' : 'scale-100'

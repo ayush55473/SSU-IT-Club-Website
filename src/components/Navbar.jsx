@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Menu, X, Calendar, Sparkles, ChevronRight } from 'lucide-react';
+import { Menu, X, Calendar, Sparkles, ChevronRight, Lock } from 'lucide-react';
 import { CLUB_INFO } from '../data/clubInfo';
 
 // 1. UNIVERSITY LOGO:
@@ -8,7 +8,7 @@ import universityLogo from '../assets/university-logo.png';
 // 2. IT CLUB LOGO:
 import itClubLogo from '../assets/CLUB_Logo.png';
 
-export function Navbar({ onSelectNav, isIntroActive = false }) {
+export function Navbar({ onSelectNav, onOpenAdmin, isIntroActive = false }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
@@ -162,6 +162,21 @@ export function Navbar({ onSelectNav, isIntroActive = false }) {
               isIntroActive ? 'opacity-0' : 'opacity-100'
             }`} />
 
+            {/* ADMIN PORTAL BUTTON (DESKTOP) */}
+            <button
+              type="button"
+              onClick={() => {
+                if (onOpenAdmin) onOpenAdmin();
+              }}
+              className={`hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-[#672C1C] bg-[#FAF6F4] hover:bg-[#672C1C] hover:text-white border border-[#AE7B29]/40 hover:border-[#AE7B29] shadow-2xs transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#AE7B29] ${
+                isIntroActive ? 'opacity-0 pointer-events-none' : 'opacity-100'
+              }`}
+              title="Authorized Core Members Portal"
+            >
+              <Lock className="w-3.5 h-3.5 text-[#AE7B29]" />
+              <span>ADMIN PORTAL</span>
+            </button>
+
             {/* IT CLUB LOGO (RIGHT CORNER) */}
             <a
               id="nav-club-logo"
@@ -216,7 +231,19 @@ export function Navbar({ onSelectNav, isIntroActive = false }) {
               </a>
             ))}
 
-            <div className="pt-2">
+            <div className="pt-2 space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  if (onOpenAdmin) onOpenAdmin();
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider text-[#672C1C] bg-[#FAF6F4] hover:bg-[#672C1C] hover:text-white border border-[#AE7B29]/40 transition-all text-center"
+              >
+                <Lock className="w-4 h-4 text-[#AE7B29]" />
+                <span>ADMIN PORTAL (CORE MEMBERS)</span>
+              </button>
+
               <a
                 href="#events"
                 onClick={(e) => handleLinkClick(e, '#events', 'events')}

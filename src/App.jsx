@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CustomCursor } from './components/CustomCursor';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -12,6 +12,7 @@ import { TeamMembers } from './components/TeamMembers';
 import { Contact } from './components/Contact';
 import { Footer } from './components/Footer';
 import { IntroAnimation } from './components/IntroAnimation';
+import { AdminPortal } from './components/admin/AdminPortal';
 
 // Both official logo assets independently imported
 import universityLogo from './assets/university-logo.png';
@@ -20,10 +21,53 @@ import itClubLogo from './assets/CLUB_Logo.png';
 export function App() {
   const [preselectedEvent, setPreselectedEvent] = useState(null);
 
+  // Path routing state supporting /admin and #/admin
+  const [currentPath, setCurrentPath] = useState(() => {
+    if (typeof window === 'undefined') return '/';
+    if (window.location.hash === '#/admin' || window.location.pathname === '/admin') {
+      return '/admin';
+    }
+    return '/';
+  });
+
+  // Listen to browser navigation / history events
+  useEffect(() => {
+    const handleLocationChange = () => {
+      if (window.location.hash === '#/admin' || window.location.pathname === '/admin') {
+        setCurrentPath('/admin');
+      } else {
+        setCurrentPath('/');
+      }
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
+  }, []);
+
+  const navigateTo = (path) => {
+    try {
+      if (path === '/admin') {
+        window.history.pushState({}, '', '/admin');
+      } else {
+        window.history.pushState({}, '', '/');
+      }
+    } catch {
+      // safe fallback if pushState restricted
+    }
+    setCurrentPath(path);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // Check if intro has already played in this browser session
   const [isIntroActive, setIsIntroActive] = useState(() => {
     if (typeof window === 'undefined') return false;
-    // Honor prefers-reduced-motion preference
+    if (window.location.pathname === '/admin' || window.location.hash === '#/admin') {
+      return false;
+    }
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return false;
     }
@@ -57,6 +101,11 @@ export function App() {
     }
   };
 
+  // If visiting /admin, render the dedicated Admin Portal page
+  if (currentPath === '/admin') {
+    return <AdminPortal onBackToWebsite={() => navigateTo('/')} />;
+  }
+
   return (
     <div className="min-h-screen bg-white text-[#2B1209] flex flex-col relative selection:bg-[#AE7B29] selection:text-white">
       {/* Intro Launch Animation Sequence (Plays on first visit or on replay) */}
@@ -72,7 +121,10 @@ export function App() {
       <CustomCursor />
 
       {/* 2. Header & Two-Logo Navigation */}
-      <Navbar isIntroActive={isIntroActive} />
+      <Navbar 
+        isIntroActive={isIntroActive} 
+        onOpenAdmin={() => navigateTo('/admin')} 
+      />
 
       {/* 3. Main Landing Page Sections */}
       <main className={`flex-1 transition-opacity duration-700 ${isIntroActive ? 'opacity-0' : 'opacity-100'}`}>
@@ -105,7 +157,10 @@ export function App() {
       </main>
 
       {/* 4. Footer with Both Logos, Quick Links, Replay Button, and Copyright */}
-      <Footer onReplayIntro={handleReplayIntro} />
+      <Footer 
+        onReplayIntro={handleReplayIntro} 
+        onOpenAdmin={() => navigateTo('/admin')} 
+      />
     </div>
   );
 }

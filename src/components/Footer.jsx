@@ -1,12 +1,12 @@
 import React from 'react';
-import { Calendar, ArrowUp, Mail, MapPin, Heart, RotateCcw } from 'lucide-react';
+import { Calendar, ArrowUp, Mail, MapPin, Heart, RotateCcw, Lock } from 'lucide-react';
 import { CLUB_INFO } from '../data/clubInfo';
 
 // Separate logo imports (independently editable)
 import universityLogo from '../assets/university-logo.png';
 import itClubLogo from '../assets/CLUB_Logo.png';
 
-export function Footer({ onReplayIntro }) {
+export function Footer({ onReplayIntro, onOpenAdmin }) {
   const currentYear = new Date().getFullYear();
 
   const scrollToTop = () => {
@@ -137,6 +137,18 @@ export function Footer({ onReplayIntro }) {
                   </a>
                 </li>
               ))}
+              <li className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onOpenAdmin) onOpenAdmin();
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs text-[#D8A54E] hover:text-white transition-colors font-bold uppercase tracking-wider"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Admin Portal</span>
+                </button>
+              </li>
             </ul>
           </div>
 

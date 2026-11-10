@@ -10,6 +10,8 @@ export default defineConfig({
         manualChunks: {
           three: ['three'],
           'framer-motion': ['framer-motion'],
+          supabase: ['@supabase/supabase-js'],
+          lucide: ['lucide-react'],
         },
       },
     },
