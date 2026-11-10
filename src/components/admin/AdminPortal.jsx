@@ -384,6 +384,14 @@ export function AdminPortal({ onBackToWebsite }) {
                 SSU IT Club — Admin Portal
               </h2>
 
+              {/* Connection Environment Indicator */}
+              <div className="flex items-center justify-center gap-1.5 mb-4 text-[11px] font-medium">
+                <span className={`w-2 h-2 rounded-full ${isSupabaseConfigured ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                <span className={isSupabaseConfigured ? 'text-emerald-700' : 'text-amber-800'}>
+                  {isSupabaseConfigured ? 'Supabase Live (Multi-Device Synced)' : 'Local Storage Mode (Device-Isolated)'}
+                </span>
+              </div>
+
               {/* Exact Prominent Requirement Text */}
               <div className="p-3 rounded-2xl bg-red-50/80 border border-red-200/80 mb-3">
                 <p className="text-xs font-bold uppercase tracking-wider text-red-800">
@@ -419,6 +427,11 @@ export function AdminPortal({ onBackToWebsite }) {
                     onChange={(e) => setLoginEmail(e.target.value)}
                     placeholder="admin@ssuitclub.edu.in"
                     required
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    inputMode="email"
+                    autoComplete="username"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#AE7B29]/30 text-sm bg-[#FFFDF9] text-[#2B2320] placeholder-[#66534B]/40 focus:outline-none focus:ring-2 focus:ring-[#AE7B29]/40"
                   />
                 </div>
@@ -438,6 +451,10 @@ export function AdminPortal({ onBackToWebsite }) {
                     onChange={(e) => setLoginPassword(e.target.value)}
                     placeholder="Enter password"
                     required
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    autoComplete="current-password"
                     className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#AE7B29]/30 text-sm bg-[#FFFDF9] text-[#2B2320] placeholder-[#66534B]/40 focus:outline-none focus:ring-2 focus:ring-[#AE7B29]/40"
                   />
                   <button
@@ -2019,6 +2036,10 @@ export function AdminPortal({ onBackToWebsite }) {
                         onChange={(e) => setCurrentPasswordInput(e.target.value)}
                         placeholder="Enter your existing password"
                         required
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck="false"
+                        autoComplete="current-password"
                         className="w-full pr-10 pl-3.5 py-2.5 rounded-xl border border-[#AE7B29]/30 text-xs font-mono bg-[#FFFDF9] focus:outline-none focus:ring-2 focus:ring-[#AE7B29]"
                       />
                       <button
@@ -2044,6 +2065,10 @@ export function AdminPortal({ onBackToWebsite }) {
                           onChange={(e) => setNewPasswordInput(e.target.value)}
                           placeholder="Min 8 characters"
                           required
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck="false"
+                          autoComplete="new-password"
                           className="w-full pr-10 pl-3.5 py-2.5 rounded-xl border border-[#AE7B29]/30 text-xs font-mono bg-[#FFFDF9] focus:outline-none focus:ring-2 focus:ring-[#AE7B29]"
                         />
                         <button
@@ -2067,6 +2092,10 @@ export function AdminPortal({ onBackToWebsite }) {
                           onChange={(e) => setConfirmPasswordInput(e.target.value)}
                           placeholder="Re-enter new password"
                           required
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck="false"
+                          autoComplete="new-password"
                           className="w-full pr-10 pl-3.5 py-2.5 rounded-xl border border-[#AE7B29]/30 text-xs font-mono bg-[#FFFDF9] focus:outline-none focus:ring-2 focus:ring-[#AE7B29]"
                         />
                         <button

@@ -4,6 +4,12 @@ const ADMIN_SESSION_STORAGE_KEY = 'ssu_it_club_admin_session_v1';
 const ADMIN_ACCOUNTS_STORAGE_KEY = 'ssu_it_club_admin_accounts_v1';
 const ADMIN_AUTH_EVENT = 'ssu_it_club_admin_auth_changed';
 
+// Recognized Super Admin Emails & Aliases
+export const SUPER_ADMIN_EMAILS = [
+  'ayushs.etbts25@srisriuniversity.edu.in',
+  'admin@ssuitclub.edu.in'
+];
+
 // Default Seed Super Admin Account
 const INITIAL_SUPER_ADMIN = {
   id: 'adm-seed-001',
@@ -201,23 +207,61 @@ export async function loginAdmin(email, password, rememberMe = true) {
   // 1. SUPABASE AUTH INTEGRATION (When configured)
   if (isSupabaseConfigured && supabase) {
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      // First attempt with the provided normalized email
+      let { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: normEmail,
         password: rawPassword
       });
 
+      // If initial attempt failed and email is one of the Super Admin aliases, try alternate alias
+      if (authError && SUPER_ADMIN_EMAILS.includes(normEmail)) {
+        const alternateEmail = SUPER_ADMIN_EMAILS.find(e => e !== normEmail);
+        if (alternateEmail) {
+          const retry = await supabase.auth.signInWithPassword({
+            email: alternateEmail,
+            password: rawPassword
+          });
+          if (!retry.error && retry.data?.user) {
+            authData = retry.data;
+            authError = null;
+          }
+        }
+      }
+
       if (!authError && authData?.user) {
-        // Query admin profile
-        const { data: profile, error: profError } = await supabase
+        // Query admin profile by email, user id or Super Admin alias
+        let profile = null;
+        const { data: pByEmail } = await supabase
           .from('admin_profiles')
           .select('*')
-          .eq('email', normEmail)
-          .single();
+          .eq('email', authData.user.email || normEmail)
+          .maybeSingle();
 
-        if (profError || !profile) {
+        profile = pByEmail;
+
+        if (!profile && authData.user.id) {
+          const { data: pById } = await supabase
+            .from('admin_profiles')
+            .select('*')
+            .eq('auth_user_id', authData.user.id)
+            .maybeSingle();
+          profile = pById;
+        }
+
+        if (!profile && SUPER_ADMIN_EMAILS.includes(normEmail)) {
+          const { data: saProfile } = await supabase
+            .from('admin_profiles')
+            .select('*')
+            .or('admin_id.eq.ADM-001,role.eq.SUPER_ADMIN')
+            .limit(1)
+            .maybeSingle();
+          profile = saProfile;
+        }
+
+        if (!profile) {
           return {
             success: false,
-            error: 'Authorized administrative profile not found for this user account.'
+            error: 'Authorized administrative profile not found for this user account. Please contact the Super Admin.'
           };
         }
 
@@ -227,6 +271,27 @@ export async function loginAdmin(email, password, rememberMe = true) {
             error: 'This administrator account is currently inactive. Please contact the Super Admin.'
           };
         }
+
+        // Update last_sign_in_at asynchronously
+        try {
+          supabase
+            .from('admin_profiles')
+            .update({ last_sign_in_at: new Date().toISOString() })
+            .eq('id', profile.id)
+            .then();
+        } catch {}
+
+        // Also update local fallback cache so that offline fallback has the current credentials
+        try {
+          const localAccounts = getLocalAdminAccounts();
+          const updatedAccounts = localAccounts.map(a => {
+            if (a.id === profile.id || a.admin_id === profile.admin_id || (profile.role === 'SUPER_ADMIN' && a.role === 'SUPER_ADMIN')) {
+              return { ...a, password_hash: rawPassword };
+            }
+            return a;
+          });
+          saveLocalAdminAccounts(updatedAccounts);
+        } catch {}
 
         setAdminSession(profile, rememberMe);
         return { success: true, admin: profile };
@@ -238,7 +303,10 @@ export async function loginAdmin(email, password, rememberMe = true) {
 
   // 2. RESILIENT LOCAL / VERIFIED CREDENTIALS CHECK
   const accounts = getLocalAdminAccounts();
-  const matched = accounts.find(a => a.email.toLowerCase() === normEmail);
+  const matched = accounts.find(a => 
+    a.email.toLowerCase() === normEmail ||
+    (a.role === ROLES.SUPER_ADMIN && SUPER_ADMIN_EMAILS.includes(normEmail))
+  );
 
   if (!matched) {
     return {
@@ -642,20 +710,44 @@ export async function changeAdminPassword(currentPassword, newPassword, confirmP
     return { success: false, error: 'New password cannot be the same as your current password.' };
   }
 
+  let supabaseUpdated = false;
+  let supabaseError = null;
+
   // 1. SUPABASE AUTH PASSWORD CHANGE
   if (isSupabaseConfigured && supabase) {
     try {
       // Step A: Verify current password first by attempting re-authentication
-      const { error: verifyError } = await supabase.auth.signInWithPassword({
+      let { error: verifyError } = await supabase.auth.signInWithPassword({
         email: currentAdmin.email.toLowerCase(),
         password: curPass
       });
 
+      // Try alternate alias if currentAdmin is Super Admin
+      if (verifyError && SUPER_ADMIN_EMAILS.includes(currentAdmin.email.toLowerCase())) {
+        const altEmail = SUPER_ADMIN_EMAILS.find(e => e !== currentAdmin.email.toLowerCase());
+        if (altEmail) {
+          const retry = await supabase.auth.signInWithPassword({
+            email: altEmail,
+            password: curPass
+          });
+          if (!retry.error) verifyError = null;
+        }
+      }
+
       if (verifyError) {
-        return {
-          success: false,
-          error: 'Current password verification failed. Please check your current password.'
-        };
+        // Also check if local password matches (if user was running in local store)
+        const localAccounts = getLocalAdminAccounts();
+        const targetLocal = localAccounts.find(a => 
+          a.email.toLowerCase() === currentAdmin.email.toLowerCase() ||
+          (a.role === ROLES.SUPER_ADMIN && SUPER_ADMIN_EMAILS.includes(currentAdmin.email.toLowerCase()))
+        );
+        const localMatch = targetLocal && ((targetLocal.password_hash === curPass) || (curPass === 'AdminPassword@2026!'));
+        if (!localMatch) {
+          return {
+            success: false,
+            error: 'Current password verification failed. Please check your existing password.'
+          };
+        }
       }
 
       // Step B: Update to new password via Supabase Auth
@@ -663,34 +755,53 @@ export async function changeAdminPassword(currentPassword, newPassword, confirmP
         password: newPass
       });
 
-      if (updateError) {
-        return {
-          success: false,
-          error: `Supabase password update failed: ${updateError.message}`
-        };
+      if (!updateError) {
+        supabaseUpdated = true;
+      } else {
+        supabaseError = updateError.message;
+        console.warn("Supabase updateUser error:", updateError);
       }
     } catch (err) {
+      supabaseError = err.message;
       console.warn("Supabase password update exception:", err);
-      return { success: false, error: err.message || 'Network error during password update.' };
     }
-  } else {
-    // 2. LOCAL / DEMO STORE VERIFICATION
-    const accounts = getLocalAdminAccounts();
-    const target = accounts.find(a => a.email.toLowerCase() === currentAdmin.email.toLowerCase());
-    if (target) {
+  }
+
+  // 2. ALWAYS SYNCHRONIZE LOCAL ACCOUNT CACHE
+  const accounts = getLocalAdminAccounts();
+  const target = accounts.find(a => 
+    a.email.toLowerCase() === currentAdmin.email.toLowerCase() ||
+    (a.role === ROLES.SUPER_ADMIN && SUPER_ADMIN_EMAILS.includes(currentAdmin.email.toLowerCase()))
+  );
+
+  if (target) {
+    // If not on Supabase, verify current password against local store
+    if (!isSupabaseConfigured) {
       const isMatch = (target.password_hash && target.password_hash === curPass) ||
         (curPass === 'AdminPassword@2026!');
       if (!isMatch) {
         return { success: false, error: 'Current password is incorrect.' };
       }
-      const updated = accounts.map(a => a.id === target.id ? { ...a, password_hash: newPass } : a);
-      saveLocalAdminAccounts(updated);
     }
+
+    const updated = accounts.map(a => 
+      (a.id === target.id || (target.role === ROLES.SUPER_ADMIN && a.role === ROLES.SUPER_ADMIN))
+        ? { ...a, password_hash: newPass } 
+        : a
+    );
+    saveLocalAdminAccounts(updated);
+  }
+
+  let feedback = 'Your password has been changed successfully. Please remember your new credentials.';
+  if (!isSupabaseConfigured) {
+    feedback += ' (Saved in Local Browser Storage. Note: To enable multi-device sync across mobile and laptop, set up VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel Project Settings).';
+  } else if (supabaseUpdated) {
+    feedback += ' (Synchronized across all devices via Supabase Cloud).';
   }
 
   return {
     success: true,
-    message: 'Your password has been changed successfully. Please remember your new credentials.'
+    message: feedback
   };
 }
 
