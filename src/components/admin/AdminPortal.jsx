@@ -58,6 +58,8 @@ import {
 
 import {
   getCurrentAdmin,
+  validateAdminSession,
+  subscribeToAuthChanges,
   loginAdmin,
   logoutAdmin,
   getAllAdmins,
@@ -189,6 +191,17 @@ export function AdminPortal({ onBackToWebsite }) {
       return () => clearTimeout(timer);
     }
   }, [actionSuccess]);
+
+  // Sync auth state & validate active database session across tabs & devices
+  useEffect(() => {
+    const unsubscribe = subscribeToAuthChanges((admin) => {
+      setCurrentAdmin(admin);
+    });
+    validateAdminSession().then((admin) => {
+      if (admin) setCurrentAdmin(admin);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Load section data when activeTab changes or admin logs in
   useEffect(() => {

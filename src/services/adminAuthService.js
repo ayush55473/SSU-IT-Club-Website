@@ -179,6 +179,36 @@ function clearAdminSession() {
   window.dispatchEvent(new CustomEvent(ADMIN_AUTH_EVENT, { detail: null }));
 }
 
+/**
+ * Validate current active session against Supabase database
+ */
+export async function validateAdminSession() {
+  const current = getCurrentAdmin();
+  if (!current) return null;
+
+  if (isSupabaseConfigured && supabase) {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('ssu_admin_session_token') || sessionStorage.getItem('ssu_admin_session_token')) : null;
+    if (token) {
+      try {
+        const { data, error } = await supabase.rpc('verify_admin_session', { p_token: token });
+        if (!error && data) {
+          if (data.valid && data.admin) {
+            setAdminSession(data.admin, true);
+            return data.admin;
+          } else if (data.valid === false) {
+            await logoutAdmin();
+            return null;
+          }
+        }
+      } catch (e) {
+        console.warn("verify_admin_session check warning:", e);
+      }
+    }
+  }
+
+  return current;
+}
+
 export function subscribeToAuthChanges(callback) {
   const handler = (e) => {
     if (typeof callback === 'function') callback(e.detail);
@@ -204,8 +234,49 @@ export async function loginAdmin(email, password, rememberMe = true) {
     return { success: false, error: 'Please enter both your Admin Email and Password.' };
   }
 
-  // 1. SUPABASE AUTH INTEGRATION (When configured)
+  // 1. DATABASE-BACKED VERIFICATION VIA POSTGRESQL RPC (Primary multi-device auth)
   if (isSupabaseConfigured && supabase) {
+    try {
+      const { data: rpcData, error: rpcError } = await supabase.rpc('verify_admin_login', {
+        p_identifier: normEmail,
+        p_password: rawPassword
+      });
+
+      if (!rpcError && rpcData) {
+        if (rpcData.success && rpcData.admin) {
+          const profile = rpcData.admin;
+          if (rpcData.token && typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('ssu_admin_session_token', rpcData.token);
+              sessionStorage.setItem('ssu_admin_session_token', rpcData.token);
+            } catch {}
+          }
+          // Also sync to local storage cache so offline mode stays updated
+          try {
+            const localAccounts = getLocalAdminAccounts();
+            const updated = localAccounts.map(a => {
+              if (a.id === profile.id || a.admin_id === profile.admin_id || (profile.role === 'SUPER_ADMIN' && a.role === 'SUPER_ADMIN')) {
+                return { ...a, password_hash: rawPassword };
+              }
+              return a;
+            });
+            saveLocalAdminAccounts(updated);
+          } catch {}
+
+          setAdminSession(profile, rememberMe);
+          return { success: true, admin: profile };
+        } else if (rpcData.error) {
+          // Explicit failure from database (e.g. wrong password or inactive account)
+          return { success: false, error: rpcData.error };
+        }
+      } else if (rpcError) {
+        console.warn("verify_admin_login RPC notice:", rpcError.message);
+      }
+    } catch (err) {
+      console.warn("verify_admin_login exception:", err);
+    }
+
+    // 2. SUPABASE AUTH FALLBACK (In case RPC is not yet created in Supabase SQL editor)
     try {
       // First attempt with the provided normalized email
       let { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -301,7 +372,7 @@ export async function loginAdmin(email, password, rememberMe = true) {
     }
   }
 
-  // 2. RESILIENT LOCAL / VERIFIED CREDENTIALS CHECK
+  // 3. RESILIENT LOCAL / VERIFIED CREDENTIALS CHECK
   const accounts = getLocalAdminAccounts();
   const matched = accounts.find(a => 
     a.email.toLowerCase() === normEmail ||
@@ -354,12 +425,24 @@ export async function loginAdmin(email, password, rememberMe = true) {
  * Log out current administrator
  */
 export async function logoutAdmin() {
+  const token = typeof window !== 'undefined' ? (localStorage.getItem('ssu_admin_session_token') || sessionStorage.getItem('ssu_admin_session_token')) : null;
   if (isSupabaseConfigured && supabase) {
+    if (token) {
+      try {
+        await supabase.rpc('invalidate_admin_session', { p_token: token });
+      } catch {}
+    }
     try {
       await supabase.auth.signOut();
     } catch {
       // safe fallback
     }
+  }
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem('ssu_admin_session_token');
+      sessionStorage.removeItem('ssu_admin_session_token');
+    } catch {}
   }
   clearAdminSession();
 }
@@ -463,18 +546,33 @@ export async function createAdminAccount(newAdminData, currentAdmin) {
     created_at: new Date().toISOString()
   };
 
-  // 1. Supabase attempt
+  // 1. Supabase attempt via RPC or direct insert
   if (isSupabaseConfigured && supabase) {
     try {
-      await supabase.from('admin_profiles').insert([{
-        email: normEmail,
-        admin_id: adminId,
-        full_name: name,
-        designation: designation,
-        role: role,
-        status: 'active',
-        avatar_url: newAdminData.avatarUrl || null
-      }]);
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('super_admin_create_account', {
+        p_email: normEmail,
+        p_admin_id: adminId,
+        p_full_name: name,
+        p_designation: designation,
+        p_role: role,
+        p_password: password,
+        p_avatar_url: newAdminData.avatarUrl || null
+      });
+
+      if (!rpcErr && rpcRes?.success) {
+        if (rpcRes.id) newAdmin.id = rpcRes.id;
+      } else {
+        // Direct table insert fallback
+        await supabase.from('admin_profiles').insert([{
+          email: normEmail,
+          admin_id: adminId,
+          full_name: name,
+          designation: designation,
+          role: role,
+          status: 'active',
+          avatar_url: newAdminData.avatarUrl || null
+        }]);
+      }
     } catch (err) {
       console.warn("Could not insert admin to Supabase table:", err);
     }
@@ -652,8 +750,17 @@ export async function resetAdminPassword(targetAdminId, newPassword, currentAdmi
     return { success: false, error: 'Password must contain at least 8 characters.' };
   }
 
-  // In Supabase, if auth is linked, trigger password reset email or update
+  // In Supabase, update password via RPC and trigger reset email if configured
   if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase.rpc('super_admin_reset_password', {
+        p_target_email: target.email,
+        p_new_password: cleanPass
+      });
+    } catch (err) {
+      console.warn("super_admin_reset_password RPC notice:", err);
+    }
+
     try {
       await supabase.auth.resetPasswordForEmail(target.email, {
         redirectTo: `${window.location.origin}/admin`
@@ -710,61 +817,34 @@ export async function changeAdminPassword(currentPassword, newPassword, confirmP
     return { success: false, error: 'New password cannot be the same as your current password.' };
   }
 
-  let supabaseUpdated = false;
-  let supabaseError = null;
+  let dbUpdated = false;
 
-  // 1. SUPABASE AUTH PASSWORD CHANGE
+  // 1. POSTGRESQL DATABASE PASSWORD UPDATE (Multi-Device Bcrypt Update via RPC)
   if (isSupabaseConfigured && supabase) {
     try {
-      // Step A: Verify current password first by attempting re-authentication
-      let { error: verifyError } = await supabase.auth.signInWithPassword({
-        email: currentAdmin.email.toLowerCase(),
-        password: curPass
+      const { data: rpcData, error: rpcError } = await supabase.rpc('update_admin_password', {
+        p_identifier: currentAdmin.email.toLowerCase(),
+        p_current_password: curPass,
+        p_new_password: newPass
       });
 
-      // Try alternate alias if currentAdmin is Super Admin
-      if (verifyError && SUPER_ADMIN_EMAILS.includes(currentAdmin.email.toLowerCase())) {
-        const altEmail = SUPER_ADMIN_EMAILS.find(e => e !== currentAdmin.email.toLowerCase());
-        if (altEmail) {
-          const retry = await supabase.auth.signInWithPassword({
-            email: altEmail,
-            password: curPass
-          });
-          if (!retry.error) verifyError = null;
+      if (!rpcError && rpcData) {
+        if (rpcData.success) {
+          dbUpdated = true;
+        } else if (rpcData.error) {
+          return { success: false, error: rpcData.error };
         }
-      }
-
-      if (verifyError) {
-        // Also check if local password matches (if user was running in local store)
-        const localAccounts = getLocalAdminAccounts();
-        const targetLocal = localAccounts.find(a => 
-          a.email.toLowerCase() === currentAdmin.email.toLowerCase() ||
-          (a.role === ROLES.SUPER_ADMIN && SUPER_ADMIN_EMAILS.includes(currentAdmin.email.toLowerCase()))
-        );
-        const localMatch = targetLocal && ((targetLocal.password_hash === curPass) || (curPass === 'AdminPassword@2026!'));
-        if (!localMatch) {
-          return {
-            success: false,
-            error: 'Current password verification failed. Please check your existing password.'
-          };
-        }
-      }
-
-      // Step B: Update to new password via Supabase Auth
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPass
-      });
-
-      if (!updateError) {
-        supabaseUpdated = true;
-      } else {
-        supabaseError = updateError.message;
-        console.warn("Supabase updateUser error:", updateError);
+      } else if (rpcError) {
+        console.warn("update_admin_password RPC notice:", rpcError.message);
       }
     } catch (err) {
-      supabaseError = err.message;
-      console.warn("Supabase password update exception:", err);
+      console.warn("update_admin_password RPC exception:", err);
     }
+
+    // Also attempt Supabase Auth updateUser if authenticated session exists
+    try {
+      await supabase.auth.updateUser({ password: newPass });
+    } catch {}
   }
 
   // 2. ALWAYS SYNCHRONIZE LOCAL ACCOUNT CACHE
@@ -793,10 +873,10 @@ export async function changeAdminPassword(currentPassword, newPassword, confirmP
   }
 
   let feedback = 'Your password has been changed successfully. Please remember your new credentials.';
-  if (!isSupabaseConfigured) {
+  if (dbUpdated) {
+    feedback = 'Your password has been securely updated in the database and is now active across all devices (Mobile & Laptop).';
+  } else if (!isSupabaseConfigured) {
     feedback += ' (Saved in Local Browser Storage. Note: To enable multi-device sync across mobile and laptop, set up VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel Project Settings).';
-  } else if (supabaseUpdated) {
-    feedback += ' (Synchronized across all devices via Supabase Cloud).';
   }
 
   return {
