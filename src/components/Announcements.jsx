@@ -10,11 +10,15 @@ import {
   Radio, 
   Pause, 
   Play, 
-  Clock,
-  Compass
+  Clock, 
+  Compass,
+  Globe,
+  ExternalLink,
+  Flame
 } from 'lucide-react';
 import { AnnouncementModal } from './AnnouncementModal';
 import { getAnnouncements, subscribeToCmsUpdates } from '../services/contentService';
+import { getLiveTechNews } from '../services/api';
 
 // Dedicated moving announcement card component (TEXT-BASED)
 function AnnouncementCard({ item, isDuplicate = false, onOpenModal }) {
@@ -84,11 +88,69 @@ function AnnouncementCard({ item, isDuplicate = false, onOpenModal }) {
   );
 }
 
+// Global Tech News Card streamed via Dev.to Free API
+function TechNewsCard({ item, isDuplicate = false }) {
+  return (
+    <article
+      tabIndex={isDuplicate ? -1 : 0}
+      aria-hidden={isDuplicate ? true : undefined}
+      className="w-[320px] sm:w-[380px] lg:w-[420px] h-[370px] sm:h-[390px] shrink-0 select-none bg-[#0D0705]/95 backdrop-blur-md rounded-2xl p-6 sm:p-7 border border-[rgba(174,123,41,0.35)] hover:border-[#AE7B29] shadow-[0_15px_35px_-10px_rgba(0,0,0,0.9)] hover:shadow-[0_20px_45px_-10px_rgba(174,123,41,0.3)] flex flex-col justify-between relative group transition-all duration-300 transform hover:-translate-y-2 focus:outline-none focus:ring-2 focus:ring-[#AE7B29]"
+    >
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-600 via-[#AE7B29] to-[#D8A54E] rounded-t-2xl opacity-80" />
+
+      <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-widest bg-emerald-950/70 text-emerald-400 border border-emerald-500/40">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        <span>Dev.to API</span>
+      </div>
+
+      <div>
+        <div className="flex flex-wrap items-center gap-2 mb-3 text-xs">
+          {(item.tag_list || []).slice(0, 2).map(tag => (
+            <span key={tag} className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#672C1C] text-[#D8A54E] border border-[#AE7B29]/40">
+              #{tag}
+            </span>
+          ))}
+          <span className="text-stone-400 text-[11px] font-mono">
+            {item.reading_time_minutes} min read
+          </span>
+        </div>
+
+        <h3 className="text-xl sm:text-2xl font-bold font-serif text-white group-hover:text-[#D8A54E] transition-colors mb-3 leading-snug line-clamp-2">
+          {item.title}
+        </h3>
+
+        <p className="text-xs sm:text-sm text-stone-300 leading-relaxed line-clamp-3 font-normal">
+          {item.description}
+        </p>
+      </div>
+
+      <div className="pt-4 border-t border-[rgba(174,123,41,0.2)] flex items-center justify-between gap-3 bg-[#0D0705]/80">
+        <span className="text-xs text-stone-400 font-medium truncate">
+          By {item.user?.name || 'Developer'}
+        </span>
+
+        <a
+          href={item.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          tabIndex={isDuplicate ? -1 : undefined}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-white bg-white/10 hover:bg-[#672C1C] border border-[#AE7B29]/40 hover:border-[#AE7B29] transition-all shadow-xs"
+        >
+          <span>Read Full Post</span>
+          <ExternalLink className="w-3.5 h-3.5 text-[#AE7B29]" />
+        </a>
+      </div>
+    </article>
+  );
+}
+
 export function Announcements() {
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { amount: 0.15 });
 
   const [announcements, setAnnouncements] = useState([]);
+  const [techArticles, setTechArticles] = useState([]);
+  const [activeSource, setActiveSource] = useState('club'); // 'club' | 'tech_wire'
   const [isLoading, setIsLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
@@ -110,6 +172,8 @@ export function Announcements() {
 
   useEffect(() => {
     fetchPublishedAnnouncements();
+    getLiveTechNews('programming', 6).then(items => setTechArticles(items));
+
     const unsubscribe = subscribeToCmsUpdates((detail) => {
       if (!detail || detail.section === 'announcements') {
         fetchPublishedAnnouncements();
@@ -125,6 +189,13 @@ export function Announcements() {
 
   // Ensure minimum 6 cards per set so the conveyor is seamless
   const getDisplayAnnouncements = () => {
+    if (activeSource === 'tech_wire') {
+      if (techArticles.length === 0) return [];
+      let list = [...techArticles];
+      while (list.length < 6) list = [...list, ...techArticles];
+      return list;
+    }
+
     if (filteredAnnouncements.length === 0) return [];
     let list = [...filteredAnnouncements];
     while (list.length < 6) {
@@ -147,7 +218,9 @@ export function Announcements() {
   };
 
   // Repeating marquee phrases for background layer
-  const topMarqueeText = "OFFICIAL BULLETINS ✦ ANNOUNCEMENTS ✦ SSU IT CLUB DISPATCHES ✦ CAMPUS TECH UPDATES ✦ REAL-TIME NOTICES ✦ ";
+  const topMarqueeText = activeSource === 'tech_wire'
+    ? "GLOBAL TECH WIRE ✦ DEV.TO OPEN SOURCE DISPATCHES ✦ SOFTWARE ENGINEERING HIGHLIGHTS ✦ "
+    : "OFFICIAL BULLETINS ✦ ANNOUNCEMENTS ✦ SSU IT CLUB DISPATCHES ✦ CAMPUS TECH UPDATES ✦ REAL-TIME NOTICES ✦ ";
   const bottomMarqueeText = "WHERE IDEAS MEET INNOVATION ◆ SRI SRI UNIVERSITY IT CLUB ◆ CONNECT • COLLABORATE • CREATE ◆ ACADEMIC YEAR 2026-2027 ◆ ";
 
   // Categories list
@@ -155,10 +228,9 @@ export function Announcements() {
 
   // =========================================================================
   // INITIAL STATE REQUIREMENT:
-  // When no announcements are published (length === 0), display the animated
-  // "EXCITING ANNOUNCEMENTS COMING SOON!" section.
+  // When no announcements are published (length === 0) AND activeSource is 'club'
   // =========================================================================
-  if (!isLoading && announcements.length === 0) {
+  if (!isLoading && announcements.length === 0 && activeSource === 'club') {
     return (
       <section 
         id="announcements" 
@@ -215,6 +287,18 @@ export function Announcements() {
             Something exciting is brewing at SSU IT Club. Stay connected with us for upcoming updates, opportunities, and important announcements.
           </motion.p>
 
+          {/* Toggle to Live Global Tech Wire */}
+          <div className="mt-8">
+            <button
+              type="button"
+              onClick={() => setActiveSource('tech_wire')}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-mono font-bold uppercase tracking-wider text-black bg-[#AE7B29] hover:bg-[#D8A54E] transition-all shadow-md"
+            >
+              <Globe className="w-4 h-4" />
+              <span>Explore Live Global Tech Wire (Dev.to API)</span>
+            </button>
+          </div>
+
           {/* Subtle Live Beacon Indicator */}
           <div className="mt-8 inline-flex items-center gap-2 text-xs font-mono text-stone-400 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -226,7 +310,7 @@ export function Announcements() {
   }
 
   // =========================================================================
-  // DYNAMIC STATE: When announcements ARE published, render the moving marquee!
+  // DYNAMIC STATE: When announcements ARE published OR Tech Wire is active
   // =========================================================================
   return (
     <section 
@@ -258,29 +342,54 @@ export function Announcements() {
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider text-[#D8A54E] bg-[#672C1C]/60 border border-[#AE7B29]/50 mb-3 shadow-2xs">
               <Radio className="w-3.5 h-3.5 text-[#AE7B29] animate-pulse" />
-              <span>LIVE NOTICES &amp; BULLETINS</span>
+              <span>{activeSource === 'tech_wire' ? 'LIVE GLOBAL DEVELOPER DISPATCHES' : 'LIVE NOTICES & BULLETINS'}</span>
             </div>
 
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-serif text-white tracking-tight uppercase">
-              Club Announcements &amp;{' '}
-              <span className="text-gold-gradient italic">Bulletins</span>
+              {activeSource === 'tech_wire' ? (
+                <>Global Tech <span className="text-gold-gradient italic">Wire</span></>
+              ) : (
+                <>Club Announcements &amp; <span className="text-gold-gradient italic">Bulletins</span></>
+              )}
             </h2>
           </div>
 
-          {/* Pause / Resume Controls */}
-          <div className="flex items-center gap-3">
+          {/* Source Tabs & Controls */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-1 bg-white/10 p-1 rounded-full border border-white/15 text-xs font-mono">
+              <button
+                type="button"
+                onClick={() => setActiveSource('club')}
+                className={`px-3 py-1.5 rounded-full font-bold uppercase transition-all ${
+                  activeSource === 'club' ? 'bg-[#AE7B29] text-black shadow-xs' : 'text-stone-300 hover:text-white'
+                }`}
+              >
+                Club Notices ({announcements.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSource('tech_wire')}
+                className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full font-bold uppercase transition-all ${
+                  activeSource === 'tech_wire' ? 'bg-emerald-600 text-white shadow-xs' : 'text-stone-300 hover:text-white'
+                }`}
+              >
+                <Globe className="w-3 h-3" />
+                <span>Tech Wire API</span>
+              </button>
+            </div>
+
             <button
               onClick={() => setIsManuallyPaused(prev => !prev)}
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-mono font-bold rounded-full bg-white/10 hover:bg-white/20 text-[#D8A54E] border border-[#AE7B29]/50 transition-all cursor-pointer"
             >
               {isManuallyPaused ? <Play className="w-3 h-3 fill-current" /> : <Pause className="w-3 h-3" />}
-              <span>{isManuallyPaused ? 'RESUME SCROLL' : 'PAUSE SCROLL'}</span>
+              <span>{isManuallyPaused ? 'RESUME' : 'PAUSE'}</span>
             </button>
           </div>
         </div>
 
         {/* Category Filter Tabs */}
-        {categories.length > 2 && (
+        {activeSource === 'club' && categories.length > 2 && (
           <div className="flex flex-wrap gap-2 mt-6">
             {categories.map((cat) => (
               <button
@@ -319,23 +428,38 @@ export function Announcements() {
           {/* First set */}
           <div className="flex gap-6 pr-6">
             {displayList.map((item, idx) => (
-              <AnnouncementCard
-                key={`orig-${item.id || idx}`}
-                item={item}
-                onOpenModal={handleOpenModal}
-              />
+              activeSource === 'tech_wire' ? (
+                <TechNewsCard
+                  key={`tech-orig-${item.id || idx}`}
+                  item={item}
+                />
+              ) : (
+                <AnnouncementCard
+                  key={`orig-${item.id || idx}`}
+                  item={item}
+                  onOpenModal={handleOpenModal}
+                />
+              )
             ))}
           </div>
 
           {/* Duplicate set for infinite loop */}
           <div className="flex gap-6 pr-6" aria-hidden="true">
             {displayList.map((item, idx) => (
-              <AnnouncementCard
-                key={`dup-${item.id || idx}`}
-                item={item}
-                isDuplicate
-                onOpenModal={handleOpenModal}
-              />
+              activeSource === 'tech_wire' ? (
+                <TechNewsCard
+                  key={`tech-dup-${item.id || idx}`}
+                  item={item}
+                  isDuplicate
+                />
+              ) : (
+                <AnnouncementCard
+                  key={`dup-${item.id || idx}`}
+                  item={item}
+                  isDuplicate
+                  onOpenModal={handleOpenModal}
+                />
+              )
             ))}
           </div>
         </div>

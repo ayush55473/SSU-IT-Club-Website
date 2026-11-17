@@ -36,6 +36,7 @@ import {
   SAMPLE_PROPOSALS
 } from '../data/sampleProposals';
 import { submitProposal, validateProposalForm } from '../utils/projectProposals';
+import { getQrCodeImageUrl } from '../services/api';
 
 export function ProjectProposal() {
   // Proposer role: 'student' | 'faculty'
@@ -397,6 +398,21 @@ export function ProjectProposal() {
                 <span className="text-xs font-medium text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
                   Status: {submittedResult.status}
                 </span>
+              </div>
+
+              {/* Digital Tracking QR Pass via Free QR API */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 p-4 mt-4 bg-[#FAF6F4] rounded-2xl border border-[#AE7B29]/30 max-w-md mx-auto text-center sm:text-left">
+                <div className="w-24 h-24 bg-white p-1.5 rounded-xl border border-[rgba(103,44,28,0.15)] shrink-0 shadow-xs">
+                  <img
+                    src={getQrCodeImageUrl({ ref: submittedResult.proposalId, title: submittedResult.project.title, proposer: submittedResult.proposer.name }, 140)}
+                    alt="Proposal Tracking QR Code"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div className="text-xs text-[#66534B]">
+                  <strong className="block text-[#672C1C] font-semibold text-sm mb-0.5">Scannable Proposal Pass</strong>
+                  <span>Keep this ticket for direct status tracking during technical review with IT cell leads.</span>
+                </div>
               </div>
             </div>
 

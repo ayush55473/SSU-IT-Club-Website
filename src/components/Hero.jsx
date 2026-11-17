@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Sparkles, Calendar, Users, Code, Trophy } from 'lucide-react';
+import { ArrowRight, Sparkles, Calendar, Users, Code, Trophy, Quote } from 'lucide-react';
 import { Hero3D } from './Hero3D';
 import { CLUB_INFO } from '../data/clubInfo';
+import { getDailyTechQuote } from '../services/api';
 
 export function Hero({ isIntroActive = false }) {
+  const [dailyQuote, setDailyQuote] = useState(null);
+
+  useEffect(() => {
+    getDailyTechQuote().then(q => setDailyQuote(q));
+  }, []);
+
   const handleScrollTo = (id) => {
     const el = document.getElementById(id);
     if (el) {
@@ -83,9 +90,20 @@ export function Hero({ isIntroActive = false }) {
             </h1>
 
             {/* Suggested Supporting Text */}
-            <p className="text-lg sm:text-xl text-[#66534B] leading-relaxed max-w-2xl mb-8 font-normal">
+            <p className="text-lg sm:text-xl text-[#66534B] leading-relaxed max-w-2xl mb-6 font-normal">
               Bringing students together to explore technology, exchange ideas, learn new skills, and create meaningful experiences through events, workshops, and collaboration.
             </p>
+
+            {/* Daily Tech Leadership Quote Pill (100% Free API Service) */}
+            {dailyQuote && (
+              <div className="mb-8 p-3.5 rounded-2xl bg-[#FAF6F4] border border-[#AE7B29]/30 flex items-start gap-3 max-w-xl shadow-2xs">
+                <Quote className="w-4 h-4 text-[#AE7B29] shrink-0 mt-0.5" />
+                <div className="text-xs text-[#66534B] leading-relaxed">
+                  <span className="font-serif italic font-medium text-[#672C1C]">"{dailyQuote.quote}"</span>
+                  <span className="block text-[11px] font-bold text-[#AE7B29] mt-1">— {dailyQuote.author} <span className="font-normal text-[#66534B]/80 hidden sm:inline">({dailyQuote.designation})</span></span>
+                </div>
+              </div>
+            )}
 
             {/* CTA Action Buttons */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-10">

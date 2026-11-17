@@ -24,8 +24,11 @@ import {
   Check
 } from 'lucide-react';
 import { registerClubMember, checkMemberDuplicate } from '../services/memberService';
+import { getVisitorGeoLocale } from '../services/api';
 
 export function JoinTeamModal({ isOpen, onClose, onSuccessViewMembers }) {
+  const [visitorLocale, setVisitorLocale] = useState(null);
+
   // Form State
   const [formData, setFormData] = useState({
     name: '',
@@ -60,6 +63,7 @@ export function JoinTeamModal({ isOpen, onClose, onSuccessViewMembers }) {
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
+      getVisitorGeoLocale().then(loc => setVisitorLocale(loc));
       setFormData({
         name: '',
         email: '',
@@ -408,7 +412,7 @@ export function JoinTeamModal({ isOpen, onClose, onSuccessViewMembers }) {
                       value={formData.phone}
                       onChange={handleChange}
                       onBlur={() => handleBlur('phone')}
-                      placeholder="10-digit mobile number"
+                      placeholder={visitorLocale?.callingCode ? `${visitorLocale.callingCode} 10-digit mobile` : "10-digit mobile number"}
                       maxLength={14}
                       className={`w-full pl-9 pr-3 py-2.5 rounded-xl border text-sm bg-white/80 text-[#2B2320] placeholder-[#66534B]/40 focus:outline-none focus:ring-2 transition-all ${
                         touched.phone && validationErrors.phone 

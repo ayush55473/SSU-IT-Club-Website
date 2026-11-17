@@ -15,14 +15,18 @@ import {
   Download,
   RotateCcw,
   ExternalLink,
-  ShieldAlert
+  ShieldAlert,
+  QrCode,
+  Sparkles
 } from 'lucide-react';
 import { getEvents, registerForEvent, subscribeToCmsUpdates } from '../services/contentService';
 import { validateRegistrationForm } from '../utils/registration';
+import { getQrCodeImageUrl, buildTicketQrData, getVisitorGeoLocale } from '../services/api';
 
 export function EventRegistration({ preselectedEvent }) {
   const [publishedEvents, setPublishedEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [visitorLocale, setVisitorLocale] = useState(null);
 
   // Filter events open for registration
   const openEvents = publishedEvents.filter(e => e.registration_enabled);
@@ -55,6 +59,7 @@ export function EventRegistration({ preselectedEvent }) {
 
   useEffect(() => {
     fetchEvents();
+    getVisitorGeoLocale().then(loc => setVisitorLocale(loc));
     const unsubscribe = subscribeToCmsUpdates((detail) => {
       if (!detail || detail.section === 'events') {
         fetchEvents();
@@ -186,22 +191,78 @@ export function EventRegistration({ preselectedEvent }) {
         {/* Registration Form Box */}
         <div className="max-w-3xl mx-auto bg-[#FFFDF9] border border-[#AE7B29]/30 rounded-3xl p-6 sm:p-10 shadow-xl">
           {submittedResult ? (
-            <div className="text-center py-8 space-y-4">
-              <CheckCircle2 className="w-16 h-16 text-emerald-600 mx-auto" />
-              <h3 className="text-2xl font-serif font-bold text-[#672C1C]">Registration Successful!</h3>
-              <p className="text-xs sm:text-sm text-[#66534B] max-w-md mx-auto">
-                Thank you, <strong>{submittedResult.fullName}</strong>. Your seat for <strong>{submittedResult.eventTitle}</strong> has been reserved.
-              </p>
-              <div className="p-4 bg-[#FAF6F4] rounded-2xl max-w-sm mx-auto font-mono text-xs">
-                Registration Code: <span className="font-bold text-[#672C1C]">{submittedResult.ticketCode}</span>
+            <div className="py-6 sm:py-8 space-y-6">
+              <div className="text-center">
+                <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto mb-2" />
+                <h3 className="text-2xl font-serif font-bold text-[#672C1C]">Registration Confirmed!</h3>
+                <p className="text-xs sm:text-sm text-[#66534B] max-w-md mx-auto">
+                  Thank you, <strong>{submittedResult.fullName}</strong>. Your official entry pass for <strong>{submittedResult.eventTitle}</strong> is ready.
+                </p>
               </div>
-              <button
-                type="button"
-                onClick={handleReset}
-                className="mt-4 px-6 py-2.5 rounded-xl bg-[#672C1C] text-white text-xs font-bold uppercase tracking-wider"
-              >
-                Register for Another Event
-              </button>
+
+              {/* Digital Event Pass Ticket with Live Scannable QR Code */}
+              <div className="max-w-md mx-auto bg-white rounded-2xl border-2 border-dashed border-[#AE7B29]/40 p-6 shadow-md relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-[#AE7B29] text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-bl-xl shadow-xs">
+                  Official Entry Pass
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  {/* Real-time generated QR Code */}
+                  <div className="w-36 h-36 bg-white p-2 rounded-xl border border-[rgba(103,44,28,0.15)] shadow-xs flex flex-col items-center justify-center shrink-0">
+                    <img
+                      src={getQrCodeImageUrl(buildTicketQrData(submittedResult), 180)}
+                      alt="Scannable Event Ticket QR Code"
+                      className="w-full h-full object-contain"
+                      loading="lazy"
+                    />
+                  </div>
+
+                  <div className="flex-1 text-center sm:text-left space-y-1.5 text-xs text-[#66534B]">
+                    <div className="font-mono text-[11px] text-[#AE7B29] font-bold">
+                      TICKET ID: {submittedResult.ticketCode}
+                    </div>
+                    <div className="font-bold text-sm text-[#672C1C]">
+                      {submittedResult.eventTitle}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[#2B1209]">Attendee:</span> {submittedResult.fullName}
+                    </div>
+                    <div className="truncate">
+                      <span className="font-semibold text-[#2B1209]">Email:</span> {submittedResult.email}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-[#2B1209]">Venue:</span> {submittedResult.eventVenue || 'Main Auditorium'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-[rgba(103,44,28,0.1)] flex items-center justify-between text-[10px] text-[#66534B]">
+                  <span className="flex items-center gap-1 font-semibold text-emerald-700">
+                    <Sparkles className="w-3 h-3 text-[#AE7B29]" />
+                    QR Verified Pass (Free Public API)
+                  </span>
+                  <span>Present at entry gate</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-5 py-2.5 rounded-xl border border-[#AE7B29] text-[#672C1C] hover:bg-[#FAF6F4] text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2"
+                >
+                  <Download className="w-3.5 h-3.5 text-[#AE7B29]" />
+                  <span>Print / Save Pass</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="px-6 py-2.5 rounded-xl bg-[#672C1C] text-white hover:bg-[#481B0F] text-xs font-bold uppercase tracking-wider transition-all shadow-sm"
+                >
+                  Register for Another Event
+                </button>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
